@@ -22,9 +22,9 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.Group;
 import javafx.scene.Node;
-import javafx.scene.Parent;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.Pagination;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
@@ -39,6 +39,9 @@ import javafx.stage.WindowEvent;
  */
 public class AIRViewerController implements Initializable {
 
+    /**
+     *
+     */
     static final String DEFAULT_PATH = "sample.pdf";
 
     @FXML
@@ -80,6 +83,11 @@ public class AIRViewerController implements Initializable {
 
     private Group pageImageGroup;
 
+    /**
+     *
+     * @param startPath
+     * @return
+     */
     private AIRViewerModel promptLoadModel(String startPath) {
 
         AIRViewerModel loadedModel = null;
@@ -104,31 +112,34 @@ public class AIRViewerController implements Initializable {
         return loadedModel;
     }
 
+    /**
+     *
+     */
     private void synchronizeSelectionKnobs() {
         if (null != model && null != currentPageImageView && null != pageImageGroup) {
             List<Rectangle> selectedAreas = model.getSelectedAreas();
             ArrayList<Node> victims = new ArrayList<>(pageImageGroup.getChildren());
-            
-            // Delete everything in teh group that isn't currentPageImageView
+
+            // Delete everything in the group that isn't currentPageImageView
             victims.stream().filter((n) -> (n != currentPageImageView)).forEach((n) -> {
                 pageImageGroup.getChildren().remove(n);
             });
-            
+
             // Add knobs to thegroup to indicate selection
             for (Rectangle r : selectedAreas) {
-                Circle knobA = new Circle(r.getX(),  (int)pageImageGroup.prefHeight(0) - r.getY(), 4);
+                Circle knobA = new Circle(r.getX(), (int) pageImageGroup.prefHeight(0) - r.getY(), 4);
                 knobA.setStroke(Color.YELLOW);
                 knobA.setStrokeWidth(2);
                 pageImageGroup.getChildren().add(knobA);
-                Circle knobB = new Circle(r.getX() + r.getWidth(), (int)pageImageGroup.prefHeight(0) - r.getY(), 4);
+                Circle knobB = new Circle(r.getX() + r.getWidth(), (int) pageImageGroup.prefHeight(0) - r.getY(), 4);
                 knobB.setStroke(Color.YELLOW);
                 knobB.setStrokeWidth(2);
                 pageImageGroup.getChildren().add(knobB);
-                Circle knobC = new Circle(r.getX() + r.getWidth(),  (int)pageImageGroup.prefHeight(0) - (r.getY() + r.getHeight()), 4);
+                Circle knobC = new Circle(r.getX() + r.getWidth(), (int) pageImageGroup.prefHeight(0) - (r.getY() + r.getHeight()), 4);
                 knobC.setStroke(Color.YELLOW);
                 knobC.setStrokeWidth(2);
                 pageImageGroup.getChildren().add(knobC);
-                Circle knobD = new Circle(r.getX(),  (int)pageImageGroup.prefHeight(0) - (r.getY() + r.getHeight()), 4);
+                Circle knobD = new Circle(r.getX(), (int) pageImageGroup.prefHeight(0) - (r.getY() + r.getHeight()), 4);
                 knobD.setStroke(Color.YELLOW);
                 knobD.setStrokeWidth(2);
                 pageImageGroup.getChildren().add(knobD);
@@ -137,12 +148,13 @@ public class AIRViewerController implements Initializable {
 
     }
 
+    /**
+     * This method is called any time the user interface needs to be refreshed
+     * to match changes to the model.
+     */
     private void refreshUserInterface() {
         assert pagination != null : "fx:id=\"pagination\" was not injected: check your FXML file 'simple.fxml'.";
-        assert openMenuItem != null : "fx:id=\"openMenuItem\" was not injected: check your FXML file 'simple.fxml'.";
         assert saveAsMenuItem != null : "fx:id=\"saveAsMenuItem\" was not injected: check your FXML file 'simple.fxml'.";
-        assert closeMenuItem != null : "fx:id=\"closeMenuItem\" was not injected: check your FXML file 'simple.fxml'.";
-
         assert extractTextMenuItem != null : "fx:id=\"extractTextMenuItem\" was not injected: check your FXML file 'simple.fxml'.";
         assert undoMenuItem != null : "fx:id=\"undoMenuItem\" was not injected: check your FXML file 'simple.fxml'.";
         assert redoMenuItem != null : "fx:id=\"redoMenuItem\" was not injected: check your FXML file 'simple.fxml'.";
@@ -151,7 +163,22 @@ public class AIRViewerController implements Initializable {
         assert addTextAnnotationMenuItem != null : "fx:id=\"addTextAnnotationMenuItem\" was not injected: check your FXML file 'simple.fxml'.";
         assert deleteAnnotationMenuItem != null : "fx:id=\"deleteAnnotationMenuItem\" was not injected: check your FXML file 'simple.fxml'.";
 
-        if (null != model) {
+        if (null == model) {
+            pagination.setPageCount(0);
+            pagination.setPageFactory(index -> {
+                return makePageViewGroup(null);
+            });
+            pagination.setDisable(true);
+            saveAsMenuItem.setDisable(true);
+            extractTextMenuItem.setDisable(true);
+            undoMenuItem.setDisable(true);
+            redoMenuItem.setDisable(true);
+            addBoxAnnotationMenuItem.setDisable(true);
+            addEllipseAnnotationMenuItem.setDisable(true);
+            addTextAnnotationMenuItem.setDisable(true);
+            deleteAnnotationMenuItem.setDisable(true);
+
+        } else {
             pagination.setPageCount(model.numPages());
             pagination.setDisable(false);
             saveAsMenuItem.setDisable(false);
@@ -168,55 +195,65 @@ public class AIRViewerController implements Initializable {
             if (null != currentPageImageView) {
                 int pageIndex = pagination.getCurrentPageIndex();
                 currentPageImageView.setImage(model.getImage(pageIndex));
-                currentPageImageView.setOnMousePressed(new EventHandler<MouseEvent>() {
-                    @Override
-                    public void handle(MouseEvent me) {
-                        float flippedY = (float) currentPageImageView.getBoundsInParent().getHeight() - (float) me.getY();
-                        System.out.println("Mouse pressed X: " + me.getX()
-                                + " Y: " + Float.toString(flippedY));
-
-                        float xInPage = (float) me.getX();
-                        float yInPage = flippedY;
-
-                        if (null != model) {
-                            int pageIndex = pagination.getCurrentPageIndex();
-                            if (!me.isMetaDown() && !me.isShiftDown()) {
-                                model.deselectAll();
-                            }
-                            model.extendSelectionOnPageAtPoint(pageIndex,
-                                    xInPage, yInPage);
-                            refreshUserInterface();
-                        }
-                    }
-                });
             }
-
-            synchronizeSelectionKnobs();
-
-        } else {
-            pagination.setPageCount(0);
-            pagination.setPageFactory(index -> {
-                if (null == pageImageGroup) {
-                    pageImageGroup = new Group();
-                }
-                currentPageImageView = new ImageView();
-                pageImageGroup.getChildren().clear();
-                pageImageGroup.getChildren().add(currentPageImageView);
-                return pageImageGroup;
-            });
-            pagination.setDisable(true);
-            saveAsMenuItem.setDisable(true);
-            extractTextMenuItem.setDisable(true);
-            undoMenuItem.setDisable(true);
-            redoMenuItem.setDisable(true);
-            addBoxAnnotationMenuItem.setDisable(true);
-            addEllipseAnnotationMenuItem.setDisable(true);
-            addTextAnnotationMenuItem.setDisable(true);
-            deleteAnnotationMenuItem.setDisable(true);
-
         }
+        synchronizeSelectionKnobs();
     }
 
+    /**
+     *
+     * @param anImage
+     * @return
+     */
+    private Group makePageViewGroup(Image anImage) {
+        if (null == pageImageGroup) {
+            pageImageGroup = new Group();
+            currentPageImageView = new ImageView();
+            pageImageGroup.getChildren().add(currentPageImageView);
+
+            pageImageGroup.setOnMousePressed(new EventHandler<MouseEvent>() {
+                @Override
+                public void handle(MouseEvent me) {
+                    assert null != currentPageImageView;
+                    assert null != model;
+
+                    float flippedY = (float) currentPageImageView.getBoundsInParent().getHeight() - (float) me.getY();
+                    System.out.println("Mouse pressed X: " + me.getX()
+                            + " Y: " + Float.toString(flippedY));
+
+                    float xInPage = (float) me.getX();
+                    float yInPage = flippedY;
+
+                    if (null != model) {
+                        int pageIndex = pagination.getCurrentPageIndex();
+                        if (!me.isMetaDown() && !me.isShiftDown()) {
+                            model.deselectAll();
+                        }
+                        model.extendSelectionOnPageAtPoint(pageIndex,
+                                xInPage, yInPage);
+                        refreshUserInterface();
+                    }
+                }
+            });
+        }
+
+        assert null != currentPageImageView;
+        currentPageImageView.setImage(anImage);
+
+        if (null != model) {
+            model.deselectAll();   // Clear selection when page changes
+            refreshUserInterface();
+        }
+
+        return pageImageGroup;
+    }
+
+    /**
+     * THismethod is called right after a model is loaded.
+     *
+     * @param aModel
+     * @return
+     */
     private AIRViewerModel reinitializeWithModel(AIRViewerModel aModel) {
         assert pagination != null : "fx:id=\"pagination\" was not injected: check your FXML file 'simple.fxml'.";
         assert openMenuItem != null : "fx:id=\"openMenuItem\" was not injected: check your FXML file 'simple.fxml'.";
@@ -244,25 +281,22 @@ public class AIRViewerController implements Initializable {
         });
         closeMenuItem.setDisable(false);
 
-        if (null != model) {
-            Stage stage = AIRViewer.getPrimaryStage();
-            assert null != stage;
+        if (null == model) {
+            pagination.setPageFactory(index -> {
+                return makePageViewGroup(null);
+            });
 
+        } else {
+
+            pagination.setPageFactory(index -> {
+                model.deselectAll(); // clear selection when changing page
+                return makePageViewGroup(model.getImage(index));
+            });
             model.deselectAll();
 
-            pagination.setPageCount(model.numPages());
-            pagination.setPageFactory(index -> {
-                if (null == pageImageGroup) {
-                    pageImageGroup = new Group();
-                }
-                currentPageImageView = new ImageView(model.getImage(index));
-                pageImageGroup.getChildren().clear();
-                pageImageGroup.getChildren().add(currentPageImageView);
-                model.deselectAll();
-                refreshUserInterface();
-                return pageImageGroup;
-            });
             saveAsMenuItem.setOnAction((ActionEvent event) -> {
+                Stage stage = AIRViewer.getPrimaryStage();
+                assert null != stage;
                 FileChooser fileChooser = new FileChooser();
                 FileChooser.ExtensionFilter extFilter = new FileChooser.ExtensionFilter("PDF files (*.pdf)", "*.pdf");
                 fileChooser.getExtensionFilters().add(extFilter);

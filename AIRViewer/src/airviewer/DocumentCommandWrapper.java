@@ -470,7 +470,7 @@ public class DocumentCommandWrapper extends AbstractDocumentCommandWrapper {
          */
         @Override
         public AbstractDocumentCommand execute() {
-            assert null != annotations && 1 == annotations.size();
+            assert null != annotations;
             assert null != arguments && 0 < arguments.size();
 
             AbstractDocumentCommand result = null;
