@@ -83,6 +83,12 @@ public class AIRViewerController implements Initializable {
 
     private Group pageImageGroup;
 
+    private float dragStartX;
+    private float dragStartFlippedY;
+    private float cumulativeDragDeltaX;
+    private float cumulativeDragDeltaFlippedY;
+    private boolean isDragging;
+
     /**
      *
      * @param startPath
@@ -211,33 +217,85 @@ public class AIRViewerController implements Initializable {
             currentPageImageView = new ImageView();
             pageImageGroup.getChildren().add(currentPageImageView);
 
-            pageImageGroup.setOnMousePressed(new EventHandler<MouseEvent>() {
-                @Override
-                public void handle(MouseEvent me) {
-                    assert null != currentPageImageView;
-                    assert null != model;
+            pageImageGroup.setOnMousePressed((MouseEvent me) -> {
+                if (null != model && null != currentPageImageView) {
 
                     float flippedY = (float) currentPageImageView.getBoundsInParent().getHeight() - (float) me.getY();
-                    System.out.println("Mouse pressed X: " + me.getX()
-                            + " Y: " + Float.toString(flippedY));
+                    float inPageX = (float) me.getX();
+                    float inPageY = flippedY;
 
-                    float xInPage = (float) me.getX();
-                    float yInPage = flippedY;
+                    // Remember pressed location in case this turns into a drag
+                    dragStartX = inPageX;
+                    dragStartFlippedY = flippedY;
+                    cumulativeDragDeltaX = 0;
+                    cumulativeDragDeltaFlippedY = 0;
 
-                    if (null != model) {
+                    int pageIndex = pagination.getCurrentPageIndex();
+                    if (!me.isMetaDown() && !me.isShiftDown()) {
+                        model.deselectAll();
+                    }
+                    model.extendSelectionOnPageAtPoint(pageIndex,
+                            inPageX, inPageY);
+                    refreshUserInterface();
+                }
+            });
+
+            pageImageGroup.setOnMouseDragged((MouseEvent me) -> {
+                if (null != model && null != currentPageImageView) {
+
+                    isDragging = true;
+                    float flippedY = (float) currentPageImageView.getBoundsInParent().getHeight() - (float) me.getY();
+                    float inPageX = (float) me.getX();
+                    float inPageY = flippedY;
+                    int pageIndex = pagination.getCurrentPageIndex();
+
+                    // Stop registering undo commands so we don't register a slew of move commands
+                    model.setIsUndoRegistrationInhibited(true);
+
+                    cumulativeDragDeltaX += inPageX - dragStartX;
+                    cumulativeDragDeltaFlippedY += flippedY - dragStartFlippedY;
+                    model.executeDocumentCommandWithNameAndArgs("MoveSelectedAnnotation",
+                            new String[]{Integer.toString(pageIndex),
+                                Float.toString(inPageX - dragStartX),
+                                Float.toString(flippedY - dragStartFlippedY)});
+                    dragStartX = inPageX;
+                    dragStartFlippedY = flippedY;
+                    refreshUserInterface();
+                }
+
+            });
+
+            pageImageGroup.setOnMouseReleased((MouseEvent me) -> {
+                if (null != model && null != currentPageImageView) {
+                    if (isDragging) {
+                        isDragging = false;
+
                         int pageIndex = pagination.getCurrentPageIndex();
-                        if (!me.isMetaDown() && !me.isShiftDown()) {
-                            model.deselectAll();
-                        }
-                        model.extendSelectionOnPageAtPoint(pageIndex,
-                                xInPage, yInPage);
+                        // Put everything back where where it was before drag started
+                        model.executeDocumentCommandWithNameAndArgs("MoveSelectedAnnotation",
+                                new String[]{Integer.toString(pageIndex),
+                                    Float.toString(-cumulativeDragDeltaX),
+                                    Float.toString(-cumulativeDragDeltaFlippedY)});
+
+                        // Resume registering undo commands
+                        model.setIsUndoRegistrationInhibited(false);
+
+                        // Move everything to final position in one big undoable operation
+                        model.executeDocumentCommandWithNameAndArgs("MoveSelectedAnnotation",
+                                new String[]{Integer.toString(pageIndex),
+                                    Float.toString(cumulativeDragDeltaX),
+                                    Float.toString(cumulativeDragDeltaFlippedY)});
+
+                        // register one cummulative command for undoing drag
                         refreshUserInterface();
                     }
                 }
+
             });
         }
 
         assert null != currentPageImageView;
+
         currentPageImageView.setImage(anImage);
 
         if (null != model) {
@@ -369,6 +427,7 @@ public class AIRViewerController implements Initializable {
             reinitializeWithModel(promptLoadModel(DEFAULT_PATH));
         });
 
+        isDragging = false;
     }
 
 }

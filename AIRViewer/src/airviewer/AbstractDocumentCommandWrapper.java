@@ -42,6 +42,12 @@ public abstract class AbstractDocumentCommandWrapper {
     /**
      *
      */
+    private static HashMap<String, makeCommand> nameToFactoryMap
+            = nameToFactoryMap = new HashMap<>();
+
+    /**
+     *
+     */
     public static interface makeCommand {
 
         public AbstractDocumentCommand make(AbstractDocumentCommandWrapper anOwner, ArrayList<String> args);
@@ -64,13 +70,12 @@ public abstract class AbstractDocumentCommandWrapper {
     /**
      *
      */
-    private static HashMap<String, makeCommand> nameToFactoryMap
-            = nameToFactoryMap = new HashMap<>();
+    private final List<PDAnnotation> selectedAnnotations;
 
     /**
      *
      */
-    private final List<PDAnnotation> selectedAnnotations;
+    private boolean isUndoRegistrationInhibited;
 
     /**
      *
@@ -117,6 +122,10 @@ public abstract class AbstractDocumentCommandWrapper {
         return selectedAnnotations;
     }
 
+    void setIsUndoRegistrationInhibited(boolean aFlag) {
+        isUndoRegistrationInhibited = aFlag;
+    }
+
     public boolean getCanUndo() {
         return 0 < undoStack.size();
     }
@@ -151,7 +160,9 @@ public abstract class AbstractDocumentCommandWrapper {
         AbstractDocumentCommand reciprocal = command.execute();
         if (null != reciprocal) {
             reciprocal.setUndoName(command.getName());
-            undoStack.push(reciprocal);
+            if (!isUndoRegistrationInhibited) {
+                undoStack.push(reciprocal);
+            }
             result = true;
         }
 

@@ -96,6 +96,12 @@ public class DocumentCommandWrapper extends AbstractDocumentCommandWrapper {
         AbstractDocumentCommandWrapper.registerCommandClassWithName(new makeCommand() {
             @Override
             public AbstractDocumentCommand make(AbstractDocumentCommandWrapper owner, ArrayList<String> args) {
+                return new MoveSelectedAnnotationDocumentCommand(owner, args);
+            }
+        }, "MoveSelectedAnnotation");
+        AbstractDocumentCommandWrapper.registerCommandClassWithName(new makeCommand() {
+            @Override
+            public AbstractDocumentCommand make(AbstractDocumentCommandWrapper owner, ArrayList<String> args) {
                 return new DeleteAnnotationDocumentCommand(owner, args);
             }
         }, "DeleteAnnotation");
@@ -430,6 +436,92 @@ public class DocumentCommandWrapper extends AbstractDocumentCommandWrapper {
                 position.setUpperRightX(position.getUpperRightX() + dx);
                 position.setUpperRightY(position.getUpperRightY() + dy);
                 candidate.setRectangle(position);
+            }
+
+            return result;
+        }
+
+        /**
+         *
+         * @return The name of the command as it will appear in a user interface
+         * for undo and redo operations e.g. "Undo Delete Annotation" where the
+         * string after "Undo " is returned from getName().
+         */
+        @Override
+        public String getName() {
+            return "Move Annotation";
+        }
+
+    }
+
+    /**
+     *
+     */
+    public class MoveSelectedAnnotationDocumentCommand extends AbstractDocumentCommand {
+
+        /**
+         *
+         * @param anOwner
+         * @param args
+         */
+        public MoveSelectedAnnotationDocumentCommand(AbstractDocumentCommandWrapper anOwner, ArrayList<String> args) {
+            super(anOwner, args);
+            assert 3 == args.size();
+        }
+
+        /**
+         *
+         * @param anOwner
+         * @param annotations
+         * @param args
+         */
+        public MoveSelectedAnnotationDocumentCommand(AbstractDocumentCommandWrapper anOwner, List<PDAnnotation> annotations, ArrayList<String> args) {
+            super(anOwner, annotations, args);
+            assert 1 == annotations.size();
+            assert 3 == args.size();
+        }
+
+        /**
+         *
+         * @return If execute() succeeds, a Command that is the reciprocal of
+         * the receiver is returned. Otherwise, null is returned.
+         */
+        @Override
+        public AbstractDocumentCommand execute() {
+            assert null != owner;
+            assert 3 == arguments.size();
+            
+            AbstractDocumentCommand result = null;
+            List<PDAnnotation> candidates;
+
+            if (null != annotations && 0 < annotations.size()) {
+                // In this case, the annotations to move are in annotations.
+                // We are probably undoing or redoing
+                candidates = annotations;
+            } else {
+                // We should the move the selected annotations
+                candidates = owner.getSelectedAnnotations();
+            }
+
+            if (0 < candidates.size()) {
+
+                int pageNumber = parseInt(arguments.get(0));
+                float dx = parseFloat(arguments.get(1));
+                float dy = parseFloat(arguments.get(2));
+
+                ArrayList<String> newArgs = new ArrayList<>(arguments);
+                newArgs.set(1, Float.toString(-dx));
+                newArgs.set(2, Float.toString(-dy));
+                result = new MoveSelectedAnnotationDocumentCommand(owner, new ArrayList<>(candidates), newArgs);
+
+                for (PDAnnotation a : candidates) {
+                    PDRectangle position = a.getRectangle();
+                    position.setLowerLeftX(position.getLowerLeftX() + dx);
+                    position.setLowerLeftY(position.getLowerLeftY() + dy);
+                    position.setUpperRightX(position.getUpperRightX() + dx);
+                    position.setUpperRightY(position.getUpperRightY() + dy);
+                    a.setRectangle(position);
+                }
             }
 
             return result;
