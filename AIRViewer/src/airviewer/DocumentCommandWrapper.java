@@ -32,6 +32,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import org.apache.pdfbox.text.PDFTextStripper;
 import static java.lang.Integer.parseInt;
+import java.rmi.server.UID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -111,6 +112,12 @@ public class DocumentCommandWrapper extends AbstractDocumentCommandWrapper {
                 return new DeleteSelectedAnnotationDocumentCommand(owner, args);
             }
         }, "DeleteSelectedAnnotation");
+        AbstractDocumentCommandWrapper.registerCommandClassWithName(new makeCommand() {
+            @Override
+            public AbstractDocumentCommand make(AbstractDocumentCommandWrapper owner, ArrayList<String> args) {
+                return new ChangeSelectedTextAnnotationDocumentCommand(owner, args);
+            }
+        }, "ChangeSelectedAnnotationText");
     }
 
     /**
@@ -490,7 +497,7 @@ public class DocumentCommandWrapper extends AbstractDocumentCommandWrapper {
         public AbstractDocumentCommand execute() {
             assert null != owner;
             assert 3 == arguments.size();
-            
+
             AbstractDocumentCommand result = null;
             List<PDAnnotation> candidates;
 
@@ -536,6 +543,85 @@ public class DocumentCommandWrapper extends AbstractDocumentCommandWrapper {
         @Override
         public String getName() {
             return "Move Annotation";
+        }
+
+    }
+
+    /**
+     *
+     */
+    public class ChangeSelectedTextAnnotationDocumentCommand extends AbstractDocumentCommand {
+
+        /**
+         *
+         * @param anOwner
+         * @param args
+         */
+        public ChangeSelectedTextAnnotationDocumentCommand(AbstractDocumentCommandWrapper anOwner, ArrayList<String> args) {
+            super(anOwner, args);
+            assert 2 == args.size();
+        }
+
+        /**
+         *
+         * @param anOwner
+         * @param annotations
+         * @param args
+         */
+        public ChangeSelectedTextAnnotationDocumentCommand(AbstractDocumentCommandWrapper anOwner, List<PDAnnotation> annotations, ArrayList<String> args) {
+            super(anOwner, annotations, args);
+            assert 1 == annotations.size();
+            assert 2 == args.size();
+        }
+
+        /**
+         *
+         * @return If execute() succeeds, a Command that is the reciprocal of
+         * the receiver is returned. Otherwise, null is returned.
+         */
+        @Override
+        public AbstractDocumentCommand execute() {
+            assert null != owner;
+            assert 2 == arguments.size();
+
+            AbstractDocumentCommand result = null;
+            List<PDAnnotation> candidates;
+
+            if (null != annotations && 0 < annotations.size()) {
+                // In this case, the annotations to change are in annotations.
+                // We are probably undoing or redoing
+                candidates = annotations;
+            } else {
+                // We should the change the selected annotations
+                candidates = owner.getSelectedAnnotations();
+            }
+
+            if (0 < candidates.size()) {
+
+                int pageNumber = parseInt(arguments.get(0));
+
+                ArrayList<String> newArgs = new ArrayList<>(arguments);
+                newArgs.set(1, candidates.get(0).getContents());
+                result = new ChangeSelectedTextAnnotationDocumentCommand(owner, new ArrayList<>(candidates), newArgs);
+
+                for (PDAnnotation a : candidates) {
+                    a.setContents(arguments.get(1));
+                    TextInAnnotationReplacer.replaceText(owner.wrappedDocument, a, arguments.get(1));
+                }
+            }
+
+            return result;
+        }
+
+        /**
+         *
+         * @return The name of the command as it will appear in a user interface
+         * for undo and redo operations e.g. "Undo Delete Annotation" where the
+         * string after "Undo " is returned from getName().
+         */
+        @Override
+        public String getName() {
+            return "Change Annotation Text";
         }
 
     }
@@ -717,25 +803,27 @@ public class DocumentCommandWrapper extends AbstractDocumentCommandWrapper {
             AbstractDocumentCommand result = null;
 
             if (0 < selectedAnnotations.size()) {
-                try {
-                    PDPage page = owner.wrappedDocument.getPage(pageNumber);
-                    oldAnnotations = page.getAnnotations();
+                PDPage page = owner.wrappedDocument.getPage(pageNumber);
+                oldAnnotations = getAllSanitizedAnnotationsOnPage(pageNumber);
+
+                if (null != oldAnnotations) {
                     result = new ReplaceAnnotationDocumentCommand(owner, new ArrayList<>(oldAnnotations), arguments);
                     for (PDAnnotation a : selectedAnnotations) {
-                        List<PDAnnotation> itemsToRemove = oldAnnotations.stream().filter(
-                                p -> p.getAnnotationName().equals(a.getAnnotationName())).collect(Collectors.toCollection(ArrayList::new));
-
-                        if (null != itemsToRemove) {
-                            for (PDAnnotation pa : itemsToRemove) {
-                                oldAnnotations.remove(pa);
+                        List<PDAnnotation> itemsToRemove = new ArrayList<>();
+                        for (PDAnnotation p : oldAnnotations) {
+                            assert null != p && null != p.getAnnotationName();
+                            assert null != a && null != a.getAnnotationName();
+                            if (p.getAnnotationName().equals(a.getAnnotationName())) {
+                                itemsToRemove.add(p);
                             }
+                        }
+                        for (PDAnnotation pa : itemsToRemove) {
+                            oldAnnotations.remove(pa);
                         }
                     }
                     page.setAnnotations(oldAnnotations);
-                    owner.deselectAll();
-                } catch (IOException ex) {
-                    Logger.getLogger(DocumentCommandWrapper.class.getName()).log(Level.SEVERE, null, ex);
                 }
+                owner.deselectAll();
 
             }
 

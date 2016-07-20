@@ -18,6 +18,7 @@ package airviewer;
 
 import java.awt.Rectangle;
 import java.io.IOException;
+import java.rmi.server.UID;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -88,6 +89,27 @@ public abstract class AbstractDocumentCommandWrapper {
         selectedAnnotations = new ArrayList<PDAnnotation>();
     }
 
+    protected List<PDAnnotation> getAllSanitizedAnnotationsOnPage(int pageIndex) {
+        List<PDAnnotation> result = null;
+
+        try {
+            PDPage page = wrappedDocument.getPage(pageIndex);
+            result = page.getAnnotations();
+            for (PDAnnotation a : result) {
+                if (null == a.getAnnotationName()) {
+                    // Other programs neglect to provide a name, so provide one
+                    // to uniquely identify selectde annotations.
+                    a.setAnnotationName(new UID().toString());
+                }
+
+            }
+        } catch (IOException ex) {
+            Logger.getLogger(AbstractDocumentCommandWrapper.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+        return result;
+    }
+
     public void deselectAll() {
         getSelectedAnnotations().clear();
     }
@@ -95,6 +117,12 @@ public abstract class AbstractDocumentCommandWrapper {
     public void extendSelectionOnPageAtPoint(int pageIndex, float x, float y) {
         PDAnnotation candidate = getLastAnnotationOnPageAtPoint(pageIndex, x, y);
         if (null != candidate && !selectedAnnotations.contains(candidate)) {
+            if (null == candidate.getAnnotationName()) {
+                // Other programs neglect to provide a name, so provide one 
+                // to uniquely identify selectde annotations.
+                candidate.setAnnotationName(new UID().toString());
+            }
+
             getSelectedAnnotations().add(candidate);
             System.out.println("Selected: " + selectedAnnotations.toString());
 
@@ -110,6 +138,15 @@ public abstract class AbstractDocumentCommandWrapper {
                     (int) aBBox.getLowerLeftY(),
                     (int) aBBox.getWidth(), (int) aBBox.getHeight());
             result.add(intBBox);
+        }
+        return result;
+    }
+
+    public List<String> getSelectedContents() {
+        ArrayList<String> result = new ArrayList<>();
+
+        for (PDAnnotation a : getSelectedAnnotations()) {
+            result.add(a.getContents());
         }
         return result;
     }

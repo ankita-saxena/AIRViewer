@@ -24,6 +24,7 @@ import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.Pagination;
+import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
@@ -150,6 +151,28 @@ public class AIRViewerController implements Initializable {
                 knobD.setStrokeWidth(2);
                 pageImageGroup.getChildren().add(knobD);
             }
+            if (1 == model.getSelectionSize()) {
+                Rectangle r = model.getSelectedAreas().get(0);
+                TextField textEntry = new TextField(model.getSelectedContents().get(0));
+                textEntry.setPrefWidth(r.getWidth());
+                textEntry.setLayoutX(r.getX() - textEntry.getLayoutBounds().getMinY());
+                textEntry.setLayoutY((pageImageGroup.prefHeight(0) - r.getY()) - textEntry.getLayoutBounds().getMinY());
+
+                textEntry.setOnAction(new EventHandler<ActionEvent>() {
+                    public void handle(ActionEvent event) {
+
+                        System.out.println(textEntry.getText());
+                        if (null != pagination) {
+                            model.executeDocumentCommandWithNameAndArgs("ChangeSelectedAnnotationText",
+                                    new String[]{Integer.toString(pagination.getCurrentPageIndex()), textEntry.getText()});
+                            refreshUserInterface();
+                        }
+                    }
+
+                });
+
+                pageImageGroup.getChildren().add(textEntry);
+            }
         }
 
     }
@@ -236,6 +259,7 @@ public class AIRViewerController implements Initializable {
                     }
                     model.extendSelectionOnPageAtPoint(pageIndex,
                             inPageX, inPageY);
+
                     refreshUserInterface();
                 }
             });
