@@ -1,0 +1,24 @@
+AddBoxAnnotation    0  36.0  36.0  72.0  72.0
+AddCircleAnnotation  0  36.0  144.0  72.0  72.0  "Hello"
+AddTextAnnotation   0  36.0  218.0  "This is some text.                            "
+AddTextAnnotation   0  36.0  236.0  "This is some text you will see if redo works. "
+AddTextAnnotation   0  36.0  254.0  "This is some text you won't see if undo works."
+Undo
+Undo
+Redo
+AddCircleAnnotation  0  "372.0"  "144.0"  "144.0"  "110.0"  "You won't see this if Delete works"
+AddCircleAnnotation  0  "372.0"  "444.0"  "144.0"  "110.0"  "You will see this if Undo and Redo work"
+DeleteAnnotation     0  "373.0"  "145.0"
+DeleteAnnotation     0  "373.0"  "445.0"
+Undo
+Undo
+Redo
+AddCircleAnnotation  2  "210.0"  "644.0"  "144.0"  "110.0"  "I should be at the top if Undo works"
+AddCircleAnnotation  2  "210.0"  "644.0"  "144.0"  "110.0"  "I should be at the bottom if Redo works"
+MoveAnnotation       2  "211.0"  "645.0"  "0.0"  "-600"
+MoveAnnotation       2  "211.0"  "645.0"  "0.0"  "-600"
+Undo
+Undo
+Redo
+Save "TestInput_annotated.pdf"
+SaveText "TestInput_extracted.txt"
