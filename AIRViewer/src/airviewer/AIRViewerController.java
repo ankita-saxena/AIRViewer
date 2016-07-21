@@ -30,9 +30,7 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.stage.FileChooser;
-import javafx.stage.Stage;
 import javafx.stage.Window;
-import javafx.stage.WindowEvent;
 
 /**
  *
@@ -102,11 +100,11 @@ public class AIRViewerController implements Initializable {
             FileChooser fileChooser = new FileChooser();
             fileChooser.setTitle("Open PDF File");
             fileChooser.setInitialFileName(startPath);
-            
+
             @SuppressWarnings("unchecked")
             Window window = pagination.getScene().getWindow();
             assert null != window;
-            
+
             File file = fileChooser.showOpenDialog(window);
             if (null != file) {
                 String path = file.getCanonicalPath();
@@ -383,12 +381,10 @@ public class AIRViewerController implements Initializable {
             model.deselectAll();
 
             saveAsMenuItem.setOnAction((ActionEvent event) -> {
-                Stage stage = AIRViewer.getPrimaryStage();
-                assert null != stage;
                 FileChooser fileChooser = new FileChooser();
                 FileChooser.ExtensionFilter extFilter = new FileChooser.ExtensionFilter("PDF files (*.pdf)", "*.pdf");
                 fileChooser.getExtensionFilters().add(extFilter);
-                File file = fileChooser.showSaveDialog((Stage) pagination.getScene().getWindow());
+                File file = fileChooser.showSaveDialog(pagination.getScene().getWindow());
                 if (null != file) {
                     model.save(file);
                 }
@@ -435,16 +431,14 @@ public class AIRViewerController implements Initializable {
         return model;
     }
 
+    public void promptUserToLoadModel() {
+        reinitializeWithModel(promptLoadModel(DEFAULT_PATH));
+    }
+
     @Override
     public void initialize(URL url, ResourceBundle rb) {
 
         assert pagination != null : "fx:id=\"pagination\" was not injected: check your FXML file 'simple.fxml'.";
-
-        Stage stage = AIRViewer.getPrimaryStage();
-        stage.addEventHandler(WindowEvent.WINDOW_SHOWING, (WindowEvent window) -> {
-            reinitializeWithModel(promptLoadModel(DEFAULT_PATH));
-        });
-
         isDragging = false;
     }
 
