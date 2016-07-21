@@ -250,8 +250,7 @@ public abstract class AbstractDocumentCommandWrapper {
             }
 
         } else {
-            Logger.getLogger(AbstractDocumentCommandWrapper.class
-                    .getName()).log(Level.SEVERE, null, aName);
+            System.err.println("Command does not exist: <"+aName+">");
         }
 
         return result;
@@ -374,7 +373,7 @@ public abstract class AbstractDocumentCommandWrapper {
         /**
          *
          */
-        protected List<PDAnnotation> annotations;
+        protected final List<PDAnnotation> annotations;
 
         /**
          *
@@ -390,6 +389,10 @@ public abstract class AbstractDocumentCommandWrapper {
             owner = anOwner;
             arguments = args;
             annotations = null;
+            undoName = "";
+            
+            assert null != owner;
+            assert null != arguments;
         }
 
         /**
@@ -401,6 +404,10 @@ public abstract class AbstractDocumentCommandWrapper {
             owner = anOwner;
             arguments = null;
             annotations = someAnnotations;
+            undoName = "";
+            
+            assert null != owner;
+            assert null != annotations;
         }
 
         /**
@@ -413,6 +420,11 @@ public abstract class AbstractDocumentCommandWrapper {
             owner = anOwner;
             arguments = args;
             annotations = someAnnotations;
+            undoName = "";
+           
+            assert null != owner;
+            assert null != arguments;
+            assert null != annotations;
         }
 
         public void setUndoName(String aName) {
@@ -443,4 +455,75 @@ public abstract class AbstractDocumentCommandWrapper {
 
     }
 
+    /**
+      */
+    public class UndoDocumentCommand extends AbstractDocumentCommand {
+
+        /**
+         *
+         * @param anOwner
+         * @param args
+         */
+        public UndoDocumentCommand(AbstractDocumentCommandWrapper anOwner, ArrayList<String> args) {
+            super(anOwner, args);
+        }
+
+        /**
+         *
+         * @return If execute() succeeds, a Command that is the reciprocal of
+         * the receiver is returned. Otherwise, null is returned.
+         */
+        @Override
+        public AbstractDocumentCommand execute() {
+            owner.undo();
+            return null;
+        }
+
+        /**
+         *
+         * @return The name of the command as it will appear in a user interface
+         * for undo and redo operations e.g. "Undo Delete Annotation" where the
+         * string after "Undo " is returned from getName().
+         */
+        @Override
+        public String getName() {
+            return "Undo";
+        }
+    }
+
+    /**
+      */
+    public class RedoDocumentCommand extends AbstractDocumentCommand {
+
+        /**
+         *
+         * @param anOwner
+         * @param args
+         */
+        public RedoDocumentCommand(AbstractDocumentCommandWrapper anOwner, ArrayList<String> args) {
+            super(anOwner, args);
+        }
+
+        /**
+         *
+         * @return If execute() succeeds, a Command that is the reciprocal of
+         * the receiver is returned. Otherwise, null is returned.
+         */
+        @Override
+        public AbstractDocumentCommand execute() {
+            owner.redo();
+            return null;
+        }
+
+        /**
+         *
+         * @return The name of the command as it will appear in a user interface
+         * for undo and redo operations e.g. "Undo Delete Annotation" where the
+         * string after "Undo " is returned from getName().
+         */
+        @Override
+        public String getName() {
+            return "Undo";
+        }
+    }
 }

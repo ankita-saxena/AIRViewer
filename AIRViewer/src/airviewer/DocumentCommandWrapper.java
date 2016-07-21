@@ -61,6 +61,18 @@ public class DocumentCommandWrapper extends AbstractDocumentCommandWrapper {
         AbstractDocumentCommandWrapper.registerCommandClassWithName(new makeCommand() {
             @Override
             public AbstractDocumentCommand make(AbstractDocumentCommandWrapper owner, ArrayList<String> args) {
+                return new UndoDocumentCommand(owner, args);
+            }
+        }, "Undo");
+        AbstractDocumentCommandWrapper.registerCommandClassWithName(new makeCommand() {
+            @Override
+            public AbstractDocumentCommand make(AbstractDocumentCommandWrapper owner, ArrayList<String> args) {
+                return new RedoDocumentCommand(owner, args);
+            }
+        }, "Redo");
+        AbstractDocumentCommandWrapper.registerCommandClassWithName(new makeCommand() {
+            @Override
+            public AbstractDocumentCommand make(AbstractDocumentCommandWrapper owner, ArrayList<String> args) {
                 return new SaveDocumentCommand(owner, args);
             }
         }, "Save");
@@ -200,11 +212,19 @@ public class DocumentCommandWrapper extends AbstractDocumentCommandWrapper {
          */
         @Override
         public AbstractDocumentCommand execute() {
+            assert null != arguments;
+
             AbstractDocumentCommand result = null;
 
-            assert null != arguments && arguments.size() == 5;
-            List<PDAnnotation> previousAnnotations = BoxAnnotationMaker.make(owner.wrappedDocument, arguments);
-            result = new ReplaceAnnotationDocumentCommand(owner, previousAnnotations, arguments);
+            if (arguments.size() == 5) {
+                List<PDAnnotation> previousAnnotations = BoxAnnotationMaker.make(owner.wrappedDocument, arguments);
+                if (null != previousAnnotations) {
+                    result = new ReplaceAnnotationDocumentCommand(owner, previousAnnotations, arguments);
+                }
+            } else {
+                System.err.printf("<%s> Expected 5 arguments but received %d.\n",
+                        getName(), arguments.size());
+            }
 
             return result;
         }
@@ -245,11 +265,20 @@ public class DocumentCommandWrapper extends AbstractDocumentCommandWrapper {
          */
         @Override
         public AbstractDocumentCommand execute() {
+            assert null != arguments;
+
             AbstractDocumentCommand result = null;
 
-            assert null != arguments && arguments.size() == 6;
-            List<PDAnnotation> previousAnnotations = EllipseAnnotationMaker.make(owner.wrappedDocument, arguments);
-            result = new ReplaceAnnotationDocumentCommand(owner, previousAnnotations, arguments);
+            if (arguments.size() == 6) {
+                List<PDAnnotation> previousAnnotations = EllipseAnnotationMaker.make(owner.wrappedDocument, arguments);
+                if (null != previousAnnotations) {
+                    result = new ReplaceAnnotationDocumentCommand(owner, previousAnnotations, arguments);
+                }
+            } else {
+                System.err.printf("<%s> Expected 6 arguments but received %d.\n",
+                        getName(), arguments.size());
+
+            }
 
             return result;
         }
@@ -288,12 +317,20 @@ public class DocumentCommandWrapper extends AbstractDocumentCommandWrapper {
          */
         @Override
         public AbstractDocumentCommand execute() {
+            assert null != arguments;
+
             AbstractDocumentCommand result = null;
 
-            assert null != arguments && arguments.size() == 6;
-            List<PDAnnotation> previousAnnotations = TextAnnotationMaker.make(owner.wrappedDocument, arguments);
-            result = new ReplaceAnnotationDocumentCommand(owner, previousAnnotations, arguments);
+            if (arguments.size() == 4) {
+                List<PDAnnotation> previousAnnotations = TextAnnotationMaker.make(owner.wrappedDocument, arguments);
+                if (null != previousAnnotations) {
+                    result = new ReplaceAnnotationDocumentCommand(owner, previousAnnotations, arguments);
+                }
+            } else {
+                System.err.printf("<%s> Expected 4 arguments but received %d.\n",
+                        getName(), arguments.size());
 
+            }
             return result;
         }
 
@@ -331,29 +368,39 @@ public class DocumentCommandWrapper extends AbstractDocumentCommandWrapper {
          */
         @Override
         public AbstractDocumentCommand execute() {
-            assert 3 == arguments.size();
+            assert null != arguments;
 
             AbstractDocumentCommand result = null;
 
-            // We have to find the annotation to delete
-            int pageNumber = parseInt(arguments.get(0));
-            float x = parseFloat(arguments.get(1));
-            float y = parseFloat(arguments.get(2));
+            if (3 == arguments.size()) {
+                // We have to find the annotation to delete
+                try {
+                    int pageNumber = parseInt(arguments.get(0));
+                    float x = parseFloat(arguments.get(1));
+                    float y = parseFloat(arguments.get(2));
 
-            PDPage page = owner.wrappedDocument.getPage(pageNumber);
+                    PDPage page = owner.wrappedDocument.getPage(pageNumber);
 
-            try {
-                List<PDAnnotation> oldAnnotations = page.getAnnotations();
-                PDAnnotation victim = owner.getLastAnnotationAtPoint(oldAnnotations, x, y);
-                if (null != victim) {
-                    result = new ReplaceAnnotationDocumentCommand(owner, new ArrayList<>(oldAnnotations), arguments);
-                    oldAnnotations.remove(victim);
-                    page.setAnnotations(oldAnnotations);
+                    List<PDAnnotation> oldAnnotations = page.getAnnotations();
+                    PDAnnotation victim = owner.getLastAnnotationAtPoint(oldAnnotations, x, y);
+                    if (null != victim) {
+                        result = new ReplaceAnnotationDocumentCommand(owner, new ArrayList<>(oldAnnotations), arguments);
+                        oldAnnotations.remove(victim);
+                        page.setAnnotations(oldAnnotations);
+                    }
+                } catch (NumberFormatException ex) {
+                    System.err.println("Non number encountered where floating point number expected.");
+                    result = null;
+
+                } catch (IOException ex) {
+                    Logger.getLogger(DocumentCommandWrapper.class.getName()).log(Level.SEVERE, null, ex);
+                    result = null;
                 }
-            } catch (IOException ex) {
-                Logger.getLogger(DocumentCommandWrapper.class.getName()).log(Level.SEVERE, null, ex);
-            }
+            } else {
+                System.err.printf("<%s> Expected 3 arguments but received %d.\n",
+                        getName(), arguments.size());
 
+            }
             return result;
         }
 
@@ -381,7 +428,6 @@ public class DocumentCommandWrapper extends AbstractDocumentCommandWrapper {
          */
         public MoveAnnotationDocumentCommand(AbstractDocumentCommandWrapper anOwner, ArrayList<String> args) {
             super(anOwner, args);
-            assert 5 == args.size();
         }
 
         /**
@@ -406,45 +452,53 @@ public class DocumentCommandWrapper extends AbstractDocumentCommandWrapper {
             AbstractDocumentCommand result = null;
             PDAnnotation candidate = null;
 
-            assert 5 == arguments.size();
+            if (5 == arguments.size()) {
 
-            int pageNumber = parseInt(arguments.get(0));
-            float x = parseFloat(arguments.get(1));
-            float y = parseFloat(arguments.get(2));
-            float dx = parseFloat(arguments.get(3));
-            float dy = parseFloat(arguments.get(4));
-
-            if (null == annotations || 0 == annotations.size()) {
                 try {
-                    // We have to find the annotation to move
-                    PDPage page = owner.wrappedDocument.getPage(pageNumber);
-                    List<PDAnnotation> oldAnnotations = page.getAnnotations();
-                    candidate = owner.getLastAnnotationAtPoint(oldAnnotations, x, y);
-                } catch (IOException ex) {
-                    Logger.getLogger(DocumentCommandWrapper.class.getName()).log(Level.SEVERE, null, ex);
+                    int pageNumber = parseInt(arguments.get(0));
+                    float x = parseFloat(arguments.get(1));
+                    float y = parseFloat(arguments.get(2));
+                    float dx = parseFloat(arguments.get(3));
+                    float dy = parseFloat(arguments.get(4));
+
+                    if (null == annotations || 0 == annotations.size()) {
+                        try {
+                            // We have to find the annotation to move
+                            PDPage page = owner.wrappedDocument.getPage(pageNumber);
+                            List<PDAnnotation> oldAnnotations = page.getAnnotations();
+                            candidate = owner.getLastAnnotationAtPoint(oldAnnotations, x, y);
+                        } catch (IOException ex) {
+                            Logger.getLogger(DocumentCommandWrapper.class.getName()).log(Level.SEVERE, null, ex);
+                        }
+                    } else {
+                        // We can just delete annotation
+                        candidate = annotations.get(0);
+                    }
+
+                    if (null != candidate) {
+
+                        ArrayList<String> newArgs = new ArrayList<>(arguments);
+                        newArgs.set(3, Float.toString(-dx));
+                        newArgs.set(4, Float.toString(-dy));
+                        ArrayList<PDAnnotation> candidateList = new ArrayList<>();
+                        candidateList.add(candidate);
+                        result = new MoveAnnotationDocumentCommand(owner, candidateList, newArgs);
+
+                        PDRectangle position = candidate.getRectangle();
+                        position.setLowerLeftX(position.getLowerLeftX() + dx);
+                        position.setLowerLeftY(position.getLowerLeftY() + dy);
+                        position.setUpperRightX(position.getUpperRightX() + dx);
+                        position.setUpperRightY(position.getUpperRightY() + dy);
+                        candidate.setRectangle(position);
+                    }
+                } catch (NumberFormatException ex) {
+                    System.err.println("Non number encountered where floating point number expected.");
                 }
             } else {
-                // We can just delete annotation
-                candidate = annotations.get(0);
+                System.err.printf("<%s> Expected 5 arguments but received %d.\n",
+                        getName(), arguments.size());
+
             }
-
-            if (null != candidate) {
-
-                ArrayList<String> newArgs = new ArrayList<>(arguments);
-                newArgs.set(3, Float.toString(-dx));
-                newArgs.set(4, Float.toString(-dy));
-                ArrayList<PDAnnotation> candidateList = new ArrayList<>();
-                candidateList.add(candidate);
-                result = new MoveAnnotationDocumentCommand(owner, candidateList, newArgs);
-
-                PDRectangle position = candidate.getRectangle();
-                position.setLowerLeftX(position.getLowerLeftX() + dx);
-                position.setLowerLeftY(position.getLowerLeftY() + dy);
-                position.setUpperRightX(position.getUpperRightX() + dx);
-                position.setUpperRightY(position.getUpperRightY() + dy);
-                candidate.setRectangle(position);
-            }
-
             return result;
         }
 
@@ -582,34 +636,40 @@ public class DocumentCommandWrapper extends AbstractDocumentCommandWrapper {
         @Override
         public AbstractDocumentCommand execute() {
             assert null != owner;
-            assert 2 == arguments.size();
+            assert null != arguments;
 
             AbstractDocumentCommand result = null;
-            List<PDAnnotation> candidates;
 
-            if (null != annotations && 0 < annotations.size()) {
-                // In this case, the annotations to change are in annotations.
-                // We are probably undoing or redoing
-                candidates = annotations;
-            } else {
-                // We should the change the selected annotations
-                candidates = owner.getSelectedAnnotations();
-            }
+            if (2 == arguments.size()) {
+                List<PDAnnotation> candidates;
 
-            if (0 < candidates.size()) {
-
-                int pageNumber = parseInt(arguments.get(0));
-
-                ArrayList<String> newArgs = new ArrayList<>(arguments);
-                newArgs.set(1, candidates.get(0).getContents());
-                result = new ChangeSelectedTextAnnotationDocumentCommand(owner, new ArrayList<>(candidates), newArgs);
-
-                for (PDAnnotation a : candidates) {
-                    a.setContents(arguments.get(1));
-                    TextInAnnotationReplacer.replaceText(owner.wrappedDocument, a, arguments.get(1));
+                if (null != annotations && 0 < annotations.size()) {
+                    // In this case, the annotations to change are in annotations.
+                    // We are probably undoing or redoing
+                    candidates = annotations;
+                } else {
+                    // We should the change the selected annotations
+                    candidates = owner.getSelectedAnnotations();
                 }
-            }
 
+                if (0 < candidates.size()) {
+
+                    int pageNumber = parseInt(arguments.get(0));
+
+                    ArrayList<String> newArgs = new ArrayList<>(arguments);
+                    newArgs.set(1, candidates.get(0).getContents());
+                    result = new ChangeSelectedTextAnnotationDocumentCommand(owner, new ArrayList<>(candidates), newArgs);
+
+                    for (PDAnnotation a : candidates) {
+                        a.setContents(arguments.get(1));
+                        TextInAnnotationReplacer.replaceText(owner.wrappedDocument, a, arguments.get(1));
+                    }
+                }
+            } else {
+                System.err.printf("<%s> Expected 2 arguments but received %d.\n",
+                        getName(), arguments.size());
+
+            }
             return result;
         }
 
@@ -691,7 +751,6 @@ public class DocumentCommandWrapper extends AbstractDocumentCommandWrapper {
          */
         protected SaveDocumentCommand(AbstractDocumentCommandWrapper anOwner, ArrayList<String> args) {
             super(anOwner, args);
-            assert 1 == args.size();
         }
 
         /**
@@ -701,14 +760,15 @@ public class DocumentCommandWrapper extends AbstractDocumentCommandWrapper {
          */
         @Override
         public AbstractDocumentCommand execute() {
-            assert null != arguments && 1 == arguments.size();
+            assert null != arguments;
 
-            try {
-                owner.wrappedDocument.save(arguments.get(0));
-            } catch (IOException ex) {
-                Logger.getLogger(DocumentCommandWrapper.class.getName()).log(Level.SEVERE, null, ex);
+            if (1 == arguments.size()) {
+                try {
+                    owner.wrappedDocument.save(arguments.get(0));
+                } catch (IOException ex) {
+                    Logger.getLogger(DocumentCommandWrapper.class.getName()).log(Level.SEVERE, null, ex);
+                }
             }
-
             return null; // Prevent "Save" item on undo stack
         }
 
@@ -737,7 +797,6 @@ public class DocumentCommandWrapper extends AbstractDocumentCommandWrapper {
          */
         protected SaveTextDocumentCommand(AbstractDocumentCommandWrapper anOwner, ArrayList<String> args) {
             super(anOwner, args);
-            assert 1 == args.size();
         }
 
         /**
@@ -747,16 +806,17 @@ public class DocumentCommandWrapper extends AbstractDocumentCommandWrapper {
          */
         @Override
         public AbstractDocumentCommand execute() {
-            assert null != arguments && 1 == arguments.size();
+            assert null != arguments;
 
-            try {
-                PDFTextStripper stripper = new PDFTextStripper();
-                String parsedText = stripper.getText(owner.wrappedDocument);
-                Files.write(Paths.get(arguments.get(0)), parsedText.getBytes(), StandardOpenOption.CREATE);
-            } catch (IOException ex) {
-                Logger.getLogger(DocumentCommandWrapper.class.getName()).log(Level.SEVERE, null, ex);
+            if (1 == arguments.size()) {
+                try {
+                    PDFTextStripper stripper = new PDFTextStripper();
+                    String parsedText = stripper.getText(owner.wrappedDocument);
+                    Files.write(Paths.get(arguments.get(0)), parsedText.getBytes(), StandardOpenOption.CREATE);
+                } catch (IOException ex) {
+                    Logger.getLogger(DocumentCommandWrapper.class.getName()).log(Level.SEVERE, null, ex);
+                }
             }
-
             return null; // Prevent "Save" item on undo stack
         }
 
@@ -795,36 +855,41 @@ public class DocumentCommandWrapper extends AbstractDocumentCommandWrapper {
          */
         @Override
         public AbstractDocumentCommand execute() {
-            assert 0 < arguments.size();
-
-            int pageNumber = parseInt(arguments.get(0));
             List<PDAnnotation> oldAnnotations;
             List<PDAnnotation> selectedAnnotations = owner.getSelectedAnnotations();
             AbstractDocumentCommand result = null;
 
             if (0 < selectedAnnotations.size()) {
-                PDPage page = owner.wrappedDocument.getPage(pageNumber);
-                oldAnnotations = getAllSanitizedAnnotationsOnPage(pageNumber);
+                assert 0 < arguments.size();
 
-                if (null != oldAnnotations) {
-                    result = new ReplaceAnnotationDocumentCommand(owner, new ArrayList<>(oldAnnotations), arguments);
-                    for (PDAnnotation a : selectedAnnotations) {
-                        List<PDAnnotation> itemsToRemove = new ArrayList<>();
-                        for (PDAnnotation p : oldAnnotations) {
-                            assert null != p && null != p.getAnnotationName();
-                            assert null != a && null != a.getAnnotationName();
-                            if (p.getAnnotationName().equals(a.getAnnotationName())) {
-                                itemsToRemove.add(p);
+                try {
+                    int pageNumber = parseInt(arguments.get(0));
+                    PDPage page = owner.wrappedDocument.getPage(pageNumber);
+                    oldAnnotations = getAllSanitizedAnnotationsOnPage(pageNumber);
+
+                    if (null != oldAnnotations) {
+                        result = new ReplaceAnnotationDocumentCommand(owner, new ArrayList<>(oldAnnotations), arguments);
+                        for (PDAnnotation a : selectedAnnotations) {
+                            List<PDAnnotation> itemsToRemove = new ArrayList<>();
+                            for (PDAnnotation p : oldAnnotations) {
+                                assert null != p && null != p.getAnnotationName();
+                                assert null != a && null != a.getAnnotationName();
+                                if (p.getAnnotationName().equals(a.getAnnotationName())) {
+                                    itemsToRemove.add(p);
+                                }
+                            }
+                            for (PDAnnotation pa : itemsToRemove) {
+                                oldAnnotations.remove(pa);
                             }
                         }
-                        for (PDAnnotation pa : itemsToRemove) {
-                            oldAnnotations.remove(pa);
-                        }
+                        page.setAnnotations(oldAnnotations);
                     }
-                    page.setAnnotations(oldAnnotations);
+                    owner.deselectAll();
+                } catch (NumberFormatException | NullPointerException ex) {
+                    System.err.println("Non number encountered where floating point number expected.");
+                    Logger.getLogger(DocumentCommandWrapper.AddBoxAnnotationDocumentCommand.class.getName()).log(Level.SEVERE, null, ex);
+                    result = null;
                 }
-                owner.deselectAll();
-
             }
 
             return result;

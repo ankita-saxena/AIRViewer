@@ -61,7 +61,7 @@ public class AIRViewer extends Application {
     private static void runScript(String[] args) throws IOException {
         assert null != args && 2 == args.length;
 
-        String regex = "\"([^\"]*)\"|(\\S+)";
+        String regex = "\"([^\"]*)\"|([^\\s#]+)|([#]+.*)";
 
         Pattern pattern = Pattern.compile(regex);
         BufferedReader br = new BufferedReader(new FileReader(args[0]));
@@ -69,20 +69,21 @@ public class AIRViewer extends Application {
         DocumentCommandWrapper commandDocument = DocumentCommandWrapper.loadDosumentAtPath(args[1]);
         String line;
         while ((line = br.readLine()) != null) {
+            System.out.println(line); // echo the input
+
             Matcher m = pattern.matcher(line);
             ArrayList<String> commandAndArgs = new ArrayList<>();
             while (m.find()) {
                 if (m.group(1) != null) {
-                    //System.out.println("Quoted [" + m.group(1) + "]");
                     commandAndArgs.add(m.group(1));
+                } else if(m.group(3) != null) {
+                    // This is a comment: ignore it
                 } else {
-                    //System.out.println("Plain [" + m.group(2) + "]");
                     commandAndArgs.add(m.group(2));
                 }
             }
 
             if (0 < commandAndArgs.size()) {
-                System.out.println(commandAndArgs.toString());
                 String[] commandAndArgsArray = commandAndArgs.toArray(new String[commandAndArgs.size()]);
                 commandDocument.executeDocumentCommandWithNameAndArgs(commandAndArgsArray[0],
                         Arrays.copyOfRange(commandAndArgsArray, 1, commandAndArgsArray.length));
@@ -120,6 +121,7 @@ public class AIRViewer extends Application {
             try {
                 runScript(args);
             } catch (IOException ex) {
+                System.err.println("Unable to run script: <"+args[0]+">");
                 Logger.getLogger(AIRViewer.class.getName()).log(Level.SEVERE, null, ex);
             }
         } else {

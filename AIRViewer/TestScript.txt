@@ -1,3 +1,16 @@
+# This is an example of a comment until the end of the line
+#
+# If the line does not start with ‘#’ the the first space delimited string on the
+# line must be the name of a command to execute. All other space delimited strings
+# on the line with the command name are used as arguments passed to the command when
+# the command is executed.
+#
+# Space delimited means that white space separates strings. There is an enhancement
+# that white space between quotation marks, “”, is not treated as a delimiter, and
+# all of the characters between the quotation marks (exclusive of the quotation marks
+# themselves but inclusive of white space) is treated as a single string.
+#
+# This group of commands should all succeed.
 AddBoxAnnotation    0  36.0  36.0  72.0  72.0
 AddCircleAnnotation  0  36.0  144.0  72.0  72.0  "Hello"
 AddTextAnnotation   0  36.0  218.0  "This is some text.                            "
@@ -22,3 +35,24 @@ Undo
 Redo
 Save "TestInput_annotated.pdf"
 SaveText "TestInput_extracted.txt"
+
+#
+# The next group of commands are expected to fail in various ways
+iwhciwehc # This is an unknown command name
+AddBoxAnnotation # This command is missing required arguments
+AddBoxAnnotation I am not a number # This command has non-numbers where numbers are required
+AddBoxAnnotation a b c d e f g h  i # This command has too many arguments
+AddCircleAnnotation # This command is missing required arguments
+AddCircleAnnotation hello I am not a number # This command has non-numbers where numbers are required
+AddCircleAnnotation a b c d e f g h  i # This command has too many arguments
+AddTextAnnotation # This command is missing required arguments
+AddTextAnnotation am not a number # This command has non-numbers where numbers are required
+AddTextAnnotation a b c d e f g h  i # This command has too many arguments
+DeleteAnnotation # This command is missing required arguments
+DeleteAnnotation not a number # This command has non-numbers where numbers are required
+DeleteAnnotation a b c d e f g h  i # This command has too many arguments
+MoveAnnotation # This command is missing required arguments
+MoveAnnotation I am not a number # This command has non-numbers where numbers are required
+MoveAnnotation a b c d e f g h  i # This command has too many arguments
+Save # This command is missing required arguments
+SaveText  # This command is missing required arguments

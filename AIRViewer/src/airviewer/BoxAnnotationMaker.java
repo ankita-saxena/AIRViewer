@@ -117,7 +117,7 @@ public class BoxAnnotationMaker {
                 result = null;
             }
         } catch (NumberFormatException | NullPointerException ex) {
-            Logger.getLogger(DocumentCommandWrapper.AddBoxAnnotationDocumentCommand.class.getName()).log(Level.SEVERE, null, ex);
+            System.err.println("\tNon number encountered where floating point number expected.");
             result = null;
         } catch (IOException ex) {
             Logger.getLogger(BoxAnnotationMaker.class.getName()).log(Level.SEVERE, null, ex);

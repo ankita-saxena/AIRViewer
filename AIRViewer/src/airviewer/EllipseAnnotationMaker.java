@@ -135,7 +135,7 @@ public class EllipseAnnotationMaker {
                 result = null;
             }
         } catch (NumberFormatException | NullPointerException ex) {
-            Logger.getLogger(DocumentCommandWrapper.AddCircleAnnotationDocumentCommand.class.getName()).log(Level.SEVERE, null, ex);
+            System.err.println("Non number encountered where floating point number expected.");
             result = null;
         } catch (IOException ex) {
             Logger.getLogger(EllipseAnnotationMaker.class.getName()).log(Level.SEVERE, null, ex);

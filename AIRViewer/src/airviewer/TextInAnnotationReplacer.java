@@ -72,23 +72,5 @@ public class TextInAnnotationReplacer {
             }
         }
     }
-    
-//    static private void createAppearanceContent(List<Object> tokens, PDAnnotation anAnnotation,
-//		PDAppearanceStream appearanceStream)
-//				throws IOException
-//{
-//	ByteArrayOutputStream output = new ByteArrayOutputStream();
-//	// BJL 9/25/2004 Must prepend existing stream
-//	// because it might have operators to draw things like
-//	// rectangles and such
-//	ContentStreamWriter writer = new ContentStreamWriter(output);
-//	writer.writeTokens(tokens);
-//	output.write("/Tx BMC\n".getBytes("ISO-8859-1"));
-//	//PDRectangle boundingBox = resolveBoundingBox(anAnnotation, appearanceStream);
-//	insertGeneratedAppearance(boundingBox, output, pdFont, tokens);
-//	//output.write("EMC".getBytes("ISO-8859-1"));
-//	output.close();
-//	writeToStream(output.toByteArray(), appearanceStream);
-//}
 
 }

@@ -38,7 +38,7 @@ public class TextAnnotationMaker {
 
     public static List<PDAnnotation> make(PDDocument document,
             ArrayList<String> arguments) {
-        assert null != arguments && arguments.size() == 6;
+        assert null != arguments && arguments.size() == 4;
         assert null != document;
 
         List<PDAnnotation> result;
@@ -47,13 +47,12 @@ public class TextAnnotationMaker {
             int pageNumber = parseInt(arguments.get(0));
             float lowerLeftX = parseFloat(arguments.get(1));
             float lowerLeftY = parseFloat(arguments.get(2));
-            float width = parseFloat(arguments.get(3));
-            float height = parseFloat(arguments.get(4));
-            String contents = arguments.get(5);
+
+            String contents = arguments.get(3);
             PDFont font = PDType1Font.HELVETICA_OBLIQUE;
             final float fontSize = 16.0f; // Or whatever font size you want.
             final float lineSpacing = 4.0f;
-            width = max(width, font.getStringWidth(contents) * fontSize / 1000.0f);
+            float width = font.getStringWidth(contents) * fontSize / 1000.0f; // font.getStringWidth(contents) returns thousanths of PS point
             final float textHeight = fontSize + lineSpacing;
 
             try {
@@ -65,7 +64,7 @@ public class TextAnnotationMaker {
                 position.setLowerLeftX(lowerLeftX);
                 position.setLowerLeftY(lowerLeftY);
                 position.setUpperRightX(lowerLeftX + width);
-                position.setUpperRightY(lowerLeftY + height);
+                position.setUpperRightY(lowerLeftY + textHeight);
 
                 PDAnnotationSquareCircle aSquare = new PDAnnotationSquareCircle(
                         PDAnnotationSquareCircle.SUB_TYPE_SQUARE);
@@ -85,7 +84,7 @@ public class TextAnnotationMaker {
                     position.setLowerLeftX(lowerLeftX - borderThick.getWidth() * 0.5f);
                     position.setLowerLeftY(lowerLeftY - borderThick.getWidth() * 0.5f);
                     position.setUpperRightX(lowerLeftX + width + borderThick.getWidth() * 0.5f);
-                    position.setUpperRightY(lowerLeftY + height + borderThick.getWidth() * 0.5f);
+                    position.setUpperRightY(lowerLeftY + textHeight + borderThick.getWidth() * 0.5f);
                     annotationAppearanceStream.setBBox(position);
                     annotationAppearanceStream.setMatrix(new AffineTransform());
                     annotationAppearanceStream.setResources(page.getResources());
@@ -94,13 +93,13 @@ public class TextAnnotationMaker {
                             document, annotationAppearanceStream)) {
                         Matrix transform = new Matrix();
                         appearanceContent.transform(transform);
-                        appearanceContent.addRect(lowerLeftX, lowerLeftY, width, height);
+                        appearanceContent.addRect(lowerLeftX, lowerLeftY, width, textHeight);
                         appearanceContent.setNonStrokingColor(fillColor);
                         appearanceContent.fill();
                         appearanceContent.beginText();
 
                         // Center text vertically, left justified
-                        appearanceContent.newLineAtOffset(lowerLeftX, lowerLeftY + height * 0.5f - fontSize * 0.5f);
+                        appearanceContent.newLineAtOffset(lowerLeftX, lowerLeftY + textHeight * 0.5f - fontSize * 0.5f);
                         appearanceContent.setFont(font, fontSize);
                         appearanceContent.setNonStrokingColor(red);
                         appearanceContent.showText(contents);
@@ -115,7 +114,7 @@ public class TextAnnotationMaker {
                 result = null;
             }
         } catch (NumberFormatException | NullPointerException ex) {
-            Logger.getLogger(DocumentCommandWrapper.AddBoxAnnotationDocumentCommand.class.getName()).log(Level.SEVERE, null, ex);
+            System.err.println("Non number encountered where floating point number expected.");
             result = null;
         } catch (IOException ex) {
             Logger.getLogger(TextAnnotationMaker.class.getName()).log(Level.SEVERE, null, ex);
