@@ -14,6 +14,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/**
+ * @author Erik M. Buck (Reviewed by Ankita Saxena
+ */
 package airviewer;
 
 import java.io.File;
@@ -33,6 +36,13 @@ import java.nio.file.StandardOpenOption;
 import org.apache.pdfbox.text.PDFTextStripper;
 import static java.lang.Integer.parseInt;
 import java.nio.charset.Charset;
+import static java.lang.Integer.parseInt;
+import static java.lang.Integer.parseInt;
+import static java.lang.Integer.parseInt;
+import static java.lang.Integer.parseInt;
+import static java.lang.Integer.parseInt;
+import static java.lang.Integer.parseInt;
+import static java.lang.Integer.parseInt;
 
 /**
  *
@@ -56,18 +66,15 @@ public class DocumentCommandWrapper extends AbstractDocumentCommandWrapper {
         assert null != aPath;
         path = aPath;
 
-        AbstractDocumentCommandWrapper.registerCommandClassWithName((AbstractDocumentCommandWrapper owner, ArrayList<String> args) -> new UndoDocumentCommand(owner, args), "Undo");
-        AbstractDocumentCommandWrapper.registerCommandClassWithName((AbstractDocumentCommandWrapper owner, ArrayList<String> args) -> new RedoDocumentCommand(owner, args), "Redo");
-        AbstractDocumentCommandWrapper.registerCommandClassWithName((AbstractDocumentCommandWrapper owner, ArrayList<String> args) -> new SaveDocumentCommand(owner, args), "Save");
-        AbstractDocumentCommandWrapper.registerCommandClassWithName((AbstractDocumentCommandWrapper owner, ArrayList<String> args) -> new SaveTextDocumentCommand(owner, args), "SaveText");
-        AbstractDocumentCommandWrapper.registerCommandClassWithName((AbstractDocumentCommandWrapper owner, ArrayList<String> args) -> new AddBoxAnnotationDocumentCommand(owner, args), "AddBoxAnnotation");
-        AbstractDocumentCommandWrapper.registerCommandClassWithName((AbstractDocumentCommandWrapper owner, ArrayList<String> args) -> new AddCircleAnnotationDocumentCommand(owner, args), "AddCircleAnnotation");
-        AbstractDocumentCommandWrapper.registerCommandClassWithName((AbstractDocumentCommandWrapper owner, ArrayList<String> args) -> new AddTextAnnotationDocumentCommand(owner, args), "AddTextAnnotation");
-        AbstractDocumentCommandWrapper.registerCommandClassWithName((AbstractDocumentCommandWrapper owner, ArrayList<String> args) -> new MoveAnnotationDocumentCommand(owner, args), "MoveAnnotation");
-        AbstractDocumentCommandWrapper.registerCommandClassWithName((AbstractDocumentCommandWrapper owner, ArrayList<String> args) -> new MoveSelectedAnnotationDocumentCommand(owner, args), "MoveSelectedAnnotation");
-        AbstractDocumentCommandWrapper.registerCommandClassWithName((AbstractDocumentCommandWrapper owner, ArrayList<String> args) -> new DeleteAnnotationDocumentCommand(owner, args), "DeleteAnnotation");
-        AbstractDocumentCommandWrapper.registerCommandClassWithName((AbstractDocumentCommandWrapper owner, ArrayList<String> args) -> new DeleteSelectedAnnotationDocumentCommand(owner, args), "DeleteSelectedAnnotation");
-        AbstractDocumentCommandWrapper.registerCommandClassWithName((AbstractDocumentCommandWrapper owner, ArrayList<String> args) -> new ChangeSelectedTextAnnotationDocumentCommand(owner, args), "ChangeSelectedAnnotationText");
+        AbstractDocumentCommandWrapper.registerCommandFactoryWithName((AbstractDocumentCommandWrapper owner, ArrayList<String> args) -> new UndoDocumentCommand(owner, args), "Undo");
+        AbstractDocumentCommandWrapper.registerCommandFactoryWithName((AbstractDocumentCommandWrapper owner, ArrayList<String> args) -> new RedoDocumentCommand(owner, args), "Redo");
+        AbstractDocumentCommandWrapper.registerCommandFactoryWithName((AbstractDocumentCommandWrapper owner, ArrayList<String> args) -> new SaveDocumentCommand(owner, args), "Save");
+        AbstractDocumentCommandWrapper.registerCommandFactoryWithName((AbstractDocumentCommandWrapper owner, ArrayList<String> args) -> new SaveTextDocumentCommand(owner, args), "SaveText");
+        AbstractDocumentCommandWrapper.registerCommandFactoryWithName((AbstractDocumentCommandWrapper owner, ArrayList<String> args) -> new AddBoxAnnotationDocumentCommand(owner, args), "AddBoxAnnotation");
+        AbstractDocumentCommandWrapper.registerCommandFactoryWithName((AbstractDocumentCommandWrapper owner, ArrayList<String> args) -> new AddCircleAnnotationDocumentCommand(owner, args), "AddCircleAnnotation");
+        AbstractDocumentCommandWrapper.registerCommandFactoryWithName((AbstractDocumentCommandWrapper owner, ArrayList<String> args) -> new AddTextAnnotationDocumentCommand(owner, args), "AddTextAnnotation");
+        AbstractDocumentCommandWrapper.registerCommandFactoryWithName((AbstractDocumentCommandWrapper owner, ArrayList<String> args) -> new MoveAnnotationDocumentCommand(owner, args), "MoveAnnotation");
+        AbstractDocumentCommandWrapper.registerCommandFactoryWithName((AbstractDocumentCommandWrapper owner, ArrayList<String> args) -> new DeleteAnnotationDocumentCommand(owner, args), "DeleteAnnotation");
     }
 
     /**
@@ -87,7 +94,7 @@ public class DocumentCommandWrapper extends AbstractDocumentCommandWrapper {
       @   ensures [file at path].nonAnnotationContent == \old(<[file at path]>).nonAnnotationContent
       @   ensures [file at path].annotationContent == \old(<[file at path]>).annotationContent
      */
-    public static DocumentCommandWrapper loadDosumentAtPath(String aPath) throws IOException {
+    public static DocumentCommandWrapper loadDocumentAtPath(String aPath) throws IOException {
         DocumentCommandWrapper result = null;
         PDDocument document = PDDocument.load(new File(aPath));
 
@@ -96,36 +103,6 @@ public class DocumentCommandWrapper extends AbstractDocumentCommandWrapper {
         }
 
         return result;
-    }
-
-    /**
-     * Save the PDF information including annotations encapsulated by the
-     * receiver to a file at the specified path. The saved information contains
-     * the same annotation and non-annotation information as the file (if any)
-     * from which information was loaded to initialize the receiver with the
-     * following exceptions: - Annotations added via the receiver since
-     * information was loaded are saved in the specified file. - Annotations
-     * deleted via the receiver since information was loaded are not saved in
-     * the specified file. - Annotations whose attributes have been changed via
-     * the receiver since information was loaded are save with changed
-     * attributes in the specified file. Trace: REQ-041000, REQ-041050
-     *
-     * @param aPath A valid complete file system path including the name of the
-     * document to save. The path must be writable in a file system with
-     * sufficient available storage capacity to store the information
-     * encapsulated by the receiver.
-     * @throws java.io.IOException
-     */
-    /*@   requires aPath is valid 
-      @   assignable \nothing;
-      @   [replaces any pre-existing file at aPath]
-      @   ensures wrappedDocument.nonAnnotationContent == \old(<wrappedDocument>).nonAnnotationContent
-      @   ensures wrappedDocument.annotationContent ==  \old(<wrappedDocument>).annotationContent
-      @   ensures [file at path].nonAnnotationContent == wrappedDocument.nonAnnotationContent
-      @   ensures [file at path].annotationContent == wrappedDocument.annotationContent
-     */
-    public void save(String aPath) throws IOException {
-        wrappedDocument.save(aPath.substring(0, aPath.lastIndexOf('.')) + "~.pdf");
     }
 
     /**
@@ -456,179 +433,6 @@ public class DocumentCommandWrapper extends AbstractDocumentCommandWrapper {
     /**
      *
      */
-    public class MoveSelectedAnnotationDocumentCommand extends AbstractDocumentCommand {
-
-        /**
-         *
-         * @param anOwner
-         * @param args
-         */
-        public MoveSelectedAnnotationDocumentCommand(AbstractDocumentCommandWrapper anOwner, ArrayList<String> args) {
-            super(anOwner, args);
-            assert 3 == args.size();
-        }
-
-        /**
-         *
-         * @param anOwner
-         * @param annotations
-         * @param args
-         */
-        public MoveSelectedAnnotationDocumentCommand(AbstractDocumentCommandWrapper anOwner, List<PDAnnotation> annotations, ArrayList<String> args) {
-            super(anOwner, annotations, args);
-            assert 1 == annotations.size();
-            assert 3 == args.size();
-        }
-
-        /**
-         *
-         * @return If execute() succeeds, a Command that is the reciprocal of
-         * the receiver is returned. Otherwise, null is returned.
-         */
-        @Override
-        public AbstractDocumentCommand execute() {
-            assert null != owner;
-            assert 3 == arguments.size();
-
-            AbstractDocumentCommand result = null;
-            List<PDAnnotation> candidates;
-
-            if (null != annotations && 0 < annotations.size()) {
-                // In this case, the annotations to move are in annotations.
-                // We are probably undoing or redoing
-                candidates = annotations;
-            } else {
-                // We should the move the selected annotations
-                candidates = owner.getSelectedAnnotations();
-            }
-
-            if (0 < candidates.size()) {
-
-                //int pageNumber = parseInt(arguments.get(0));
-                float dx = parseFloat(arguments.get(1));
-                float dy = parseFloat(arguments.get(2));
-
-                ArrayList<String> newArgs = new ArrayList<>(arguments);
-                newArgs.set(1, Float.toString(-dx));
-                newArgs.set(2, Float.toString(-dy));
-                result = new MoveSelectedAnnotationDocumentCommand(owner, new ArrayList<>(candidates), newArgs);
-
-                candidates.stream().forEach((a) -> {
-                    PDRectangle position = a.getRectangle();
-                    position.setLowerLeftX(position.getLowerLeftX() + dx);
-                    position.setLowerLeftY(position.getLowerLeftY() + dy);
-                    position.setUpperRightX(position.getUpperRightX() + dx);
-                    position.setUpperRightY(position.getUpperRightY() + dy);
-                    a.setRectangle(position);
-                });
-            }
-
-            return result;
-        }
-
-        /**
-         *
-         * @return The name of the command as it will appear in a user interface
-         * for undo and redo operations e.g. "Undo Delete Annotation" where the
-         * string after "Undo " is returned from getName().
-         */
-        @Override
-        public String getName() {
-            return "Move Annotation";
-        }
-
-    }
-
-    /**
-     *
-     */
-    public class ChangeSelectedTextAnnotationDocumentCommand extends AbstractDocumentCommand {
-
-        /**
-         *
-         * @param anOwner
-         * @param args
-         */
-        public ChangeSelectedTextAnnotationDocumentCommand(AbstractDocumentCommandWrapper anOwner, ArrayList<String> args) {
-            super(anOwner, args);
-            assert 2 == args.size();
-        }
-
-        /**
-         *
-         * @param anOwner
-         * @param annotations
-         * @param args
-         */
-        public ChangeSelectedTextAnnotationDocumentCommand(AbstractDocumentCommandWrapper anOwner, List<PDAnnotation> annotations, ArrayList<String> args) {
-            super(anOwner, annotations, args);
-            assert 1 == annotations.size();
-            assert 2 == args.size();
-        }
-
-        /**
-         *
-         * @return If execute() succeeds, a Command that is the reciprocal of
-         * the receiver is returned. Otherwise, null is returned.
-         */
-        @Override
-        public AbstractDocumentCommand execute() {
-            assert null != owner;
-            assert null != arguments;
-
-            AbstractDocumentCommand result = null;
-
-            if (2 == arguments.size()) {
-                List<PDAnnotation> candidates;
-
-                if (null != annotations && 0 < annotations.size()) {
-                    // In this case, the annotations to change are in annotations.
-                    // We are probably undoing or redoing
-                    candidates = annotations;
-                } else {
-                    // We should the change the selected annotations
-                    candidates = owner.getSelectedAnnotations();
-                }
-
-                if (0 < candidates.size()) {
-
-                    //int pageNumber = parseInt(arguments.get(0));
-
-                    ArrayList<String> newArgs = new ArrayList<>(arguments);
-                    newArgs.set(1, candidates.get(0).getContents());
-                    result = new ChangeSelectedTextAnnotationDocumentCommand(owner, new ArrayList<>(candidates), newArgs);
-
-                    candidates.stream().map((a) -> {
-                        a.setContents(arguments.get(1));
-                        return a;
-                    }).forEach((a) -> {
-                        TextInAnnotationReplacer.replaceText(owner.wrappedDocument, a, arguments.get(1));
-                    });
-                }
-            } else {
-                System.err.printf("<%s> Expected 2 arguments but received %d.%n",
-                        getName(), arguments.size());
-
-            }
-            return result;
-        }
-
-        /**
-         *
-         * @return The name of the command as it will appear in a user interface
-         * for undo and redo operations e.g. "Undo Delete Annotation" where the
-         * string after "Undo " is returned from getName().
-         */
-        @Override
-        public String getName() {
-            return "Change Annotation Text";
-        }
-
-    }
-
-    /**
-     *
-     */
     public class ReplaceAnnotationDocumentCommand extends AbstractDocumentCommand {
 
         /**
@@ -772,84 +576,6 @@ public class DocumentCommandWrapper extends AbstractDocumentCommandWrapper {
             return "Save Non-annotation Text";
         }
 
-    }
-
-    /**
-     * Instances of this class encapsulate commands to annotate PDF documents
-     * encapsulated by deleting an existing annotation.
-     */
-    public class DeleteSelectedAnnotationDocumentCommand extends AbstractDocumentCommand {
-
-        /**
-         * 
-         * @param anOwner
-         * @param args 
-         */
-        public DeleteSelectedAnnotationDocumentCommand(AbstractDocumentCommandWrapper anOwner, ArrayList<String> args) {
-            super(anOwner, args);
-        }
-
-        /**
-         *
-         * @return If execute() succeeds, a Command that is the reciprocal of
-         * the receiver is returned. Otherwise, null is returned.
-         */
-        @Override
-        public AbstractDocumentCommand execute() {
-            List<PDAnnotation> oldAnnotations;
-            List<PDAnnotation> selectedAnnotations = owner.getSelectedAnnotations();
-            AbstractDocumentCommand result = null;
-
-            if (0 < selectedAnnotations.size()) {
-                assert 0 < arguments.size();
-
-                try {
-                    int pageNumber = parseInt(arguments.get(0));
-                    PDPage page = owner.wrappedDocument.getPage(pageNumber);
-                    oldAnnotations = getAllSanitizedAnnotationsOnPage(pageNumber);
-
-                    if (null != oldAnnotations) {
-                        result = new ReplaceAnnotationDocumentCommand(owner, new ArrayList<>(oldAnnotations), arguments);
-                        selectedAnnotations.stream().map((a) -> {
-                            List<PDAnnotation> itemsToRemove = new ArrayList<>();
-                            oldAnnotations.stream().map((p) -> {
-                                assert null != p && null != p.getAnnotationName();
-                                return p;
-                            }).forEach((p) -> {
-                                assert null != a && null != a.getAnnotationName();
-                                if (p.getAnnotationName().equals(a.getAnnotationName())) {
-                                    itemsToRemove.add(p);
-                                }
-                            });
-                            return itemsToRemove;
-                        }).forEach((itemsToRemove) -> {
-                            itemsToRemove.stream().forEach((pa) -> {
-                                oldAnnotations.remove(pa);
-                            });
-                        });
-                        page.setAnnotations(oldAnnotations);
-                    }
-                    owner.deselectAll();
-                } catch (NumberFormatException | NullPointerException ex) {
-                    System.err.println("Non number encountered where floating point number expected.");
-                    Logger.getLogger(DocumentCommandWrapper.AddBoxAnnotationDocumentCommand.class.getName()).log(Level.SEVERE, null, ex);
-                    result = null;
-                }
-            }
-
-            return result;
-        }
-
-        /**
-         *
-         * @return The name of the command as it will appear in a user interface
-         * for undo and redo operations e.g. "Undo Delete Annotation" where the
-         * string after "Undo " is returned from getName().
-         */
-        @Override
-        public String getName() {
-            return "Delete Annotation";
-        }
     }
 
 }

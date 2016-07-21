@@ -1,7 +1,21 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/**
+ * @author Erik M. Buck (Reviewed by Ankita Saxena
  */
 package airviewer;
 
@@ -30,11 +44,25 @@ import org.apache.pdfbox.pdmodel.interactive.annotation.PDBorderStyleDictionary;
 import org.apache.pdfbox.util.Matrix;
 
 /**
+ * This is a helper class for creating the "Appearance Stream" for Box
+ * annotations. This code is necessary because of bug PDFBox-2019. The PDF
+ * Specification Section 8.4.1 lists the Appearance Streams as "Optional" in the
+ * Appearance Dictionary for each annotation. "(Optional; PDF 1.2) An appearance
+ * dictionary specifying how the annotation is presented visually on the page
+ * (see Section 8.4.4, “Appearance Streams” and also implementation note 79 in
+ * Appendix H). Individual annotation handlers may ignore this entry and provide
+ * their own appearances."
  *
- * @author erik
+ * @author Erik M. Buck (Reviewed by Ankita Saxena
  */
 public class BoxAnnotationMaker {
 
+    /**
+     *
+     * @param document
+     * @param arguments
+     * @return
+     */
     public static List<PDAnnotation> make(PDDocument document,
             ArrayList<String> arguments) {
         assert null != arguments && arguments.size() == 5;

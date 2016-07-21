@@ -8,7 +8,7 @@
   </information>
   <resources>
     <j2se version="1.6+" java-vm-args="-enableassertions "  href="http://java.sun.com/products/autodl/j2se"/>
-    <jar href="AIRViewer.jar" size="58705" download="eager" />
+    <jar href="AIRViewer.jar" size="59248" download="eager" />
     <jar href="lib/pdfbox-app-2.0.2.jar" size="7942473" download="eager" />
   </resources>
   <applet-desc  width="800" height="600" main-class="com.javafx.main.NoJavaFXFallback"  name="AIRViewer" >
