@@ -73,7 +73,8 @@ public final class AIRViewer extends Application {
      */
     @Override
     public void start(Stage stage) throws Exception {
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("AIRFXMLDocument.fxml"));
+        assert stage !=null;
+    	FXMLLoader loader = new FXMLLoader(getClass().getResource("AIRFXMLDocument.fxml"));
         Parent root = (Parent) loader.load();
         Scene scene = new Scene(root);
         stage.setScene(scene);
@@ -198,6 +199,7 @@ public final class AIRViewer extends Application {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
+    	assert args.length > 0;
         if (0 != args.length) {
             commandLineMain(args);
         } else {

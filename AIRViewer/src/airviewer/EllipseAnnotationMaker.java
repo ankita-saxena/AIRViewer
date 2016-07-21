@@ -45,11 +45,32 @@ import org.apache.pdfbox.pdmodel.interactive.annotation.PDBorderStyleDictionary;
 import org.apache.pdfbox.util.Matrix;
 
 /**
+ * This is a helper class for creating the "Appearance Stream" for "Circle"
+ * annotations. This code is necessary because of bug PDFBox-2019. The PDF
+ * Specification Section 8.4.1 lists the Appearance Streams as "Optional" in the
+ * Appearance Dictionary for each annotation. "(Optional; PDF 1.2) An appearance
+ * dictionary specifying how the annotation is presented visually on the page
+ * (see Section 8.4.4, “Appearance Streams” and also implementation note 79 in
+ * Appendix H). Individual annotation handlers may ignore this entry and provide
+ * their own appearances."
  *
- * @author erik
+ * Even though "handlers may ignore this entry", PDFBox requires the presence of
+ * the entry and will not display annotations that lack the entry. The
+ * Appearance Stream(s) is a set of PDF drawing operators and operands that
+ * specify how the annotation should appear when rendered. Acrobat and Preview
+ * and some other programs supply a default appearance when the Appearance
+ * Stream(s) is missing. PDFBox does not.
+ *
+ * @author Erik M. Buck (Reviewed by Ankita Saxena
  */
 public class EllipseAnnotationMaker {
 
+    /**
+     * 
+     * @param document
+     * @param arguments(pageNumber, lowerLeftX, lowerLeftY, width, height, contents)
+     * @return 
+     */
     public static List<PDAnnotation> make(PDDocument document,
             ArrayList<String> arguments) {
         assert null != arguments && arguments.size() == 6;
@@ -67,9 +88,9 @@ public class EllipseAnnotationMaker {
 
             PDFont font = PDType1Font.HELVETICA_OBLIQUE;
             final float fontSize = 16.0f; // Or whatever font size you want.
-            final float lineSpacing = 4.0f;
+            //final float lineSpacing = 4.0f;
             width = max(width, font.getStringWidth(contents) * fontSize / 1000.0f);
-            final float textHeight = fontSize + lineSpacing;
+            //final float textHeight = fontSize + lineSpacing;
 
             try {
                 PDPage page = document.getPage(pageNumber);

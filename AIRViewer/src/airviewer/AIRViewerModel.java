@@ -65,7 +65,7 @@ public class AIRViewerModel extends DocumentCommandWrapper {
      * incorrect strings that may have been input by users or provided by
      * scripts.
      */
-    private static final Logger LOGGER = Logger.getLogger(AIRViewerModel.class.getName());
+    //private static final Logger LOGGER = Logger.getLogger(AIRViewerModel.class.getName());
 
     /**
      * The PDFBox renderer used to convert individual PDF "pages" into images.
@@ -120,6 +120,7 @@ public class AIRViewerModel extends DocumentCommandWrapper {
      * @param file The file into which PDF data is written.
      */
     public void save(File file) {
+    	assert file !=null;
         try {
             wrappedDocument.save(file);
         } catch (IOException ex) {
@@ -139,7 +140,8 @@ public class AIRViewerModel extends DocumentCommandWrapper {
      * @return A list of uniquely named annotations.
      */
     private List<PDAnnotation> getAllSanitizedAnnotationsOnPage(int pageIndex) {
-        List<PDAnnotation> result = null;
+        assert Integer.toString(pageIndex) != null;
+    	List<PDAnnotation> result = null;
 
         try {
             PDPage page = wrappedDocument.getPage(pageIndex);
@@ -350,6 +352,7 @@ public class AIRViewerModel extends DocumentCommandWrapper {
          */
         @Override
         public AbstractDocumentCommand execute() {
+        	assert owner!=null;
             List<PDAnnotation> oldAnnotations;
             List<PDAnnotation> selectedAnnotations = owner.getSelectedAnnotations();
             AbstractDocumentCommand result = null;

@@ -49,9 +49,16 @@ import org.apache.pdfbox.util.Matrix;
  * Specification Section 8.4.1 lists the Appearance Streams as "Optional" in the
  * Appearance Dictionary for each annotation. "(Optional; PDF 1.2) An appearance
  * dictionary specifying how the annotation is presented visually on the page
- * (see Section 8.4.4, ‚ÄúAppearance Streams‚Äù and also implementation note 79 in
+ * (see Section 8.4.4, ìAppearance Streamsî and also implementation note 79 in
  * Appendix H). Individual annotation handlers may ignore this entry and provide
  * their own appearances."
+ *
+ * EVen though "handlers may ignore this entry", PDFBox requires the presence of
+ * the entry and will not display annotations that lack the entry. The
+ * Appearance Stream(s) is a set of PDF drawing operators and operands that
+ * specify how the annotation should appear when rendered. Acrobat and Preview
+ * and some other programs supply a default appearance when the Appearance
+ * Stream(s) is missing. PDFBox does not.
  *
  * @author Erik M. Buck (Reviewed by Ankita Saxena
  */
@@ -60,7 +67,7 @@ public class BoxAnnotationMaker {
     /**
      *
      * @param document
-     * @param arguments
+     * @param arguments(lowerLeftX, lowerLeftY, width, height)
      * @return
      */
     public static List<PDAnnotation> make(PDDocument document,
@@ -80,7 +87,7 @@ public class BoxAnnotationMaker {
             PDFont font = PDType1Font.HELVETICA_OBLIQUE;
             float fontSize = 16; // Or whatever font size you want.
             //float textWidth = font.getStringWidth(contents) * fontSize / 1000.0f;
-            float textHeight = 32;
+            //float textHeight = 32;
 
             try {
                 PDPage page = document.getPage(pageNumber);

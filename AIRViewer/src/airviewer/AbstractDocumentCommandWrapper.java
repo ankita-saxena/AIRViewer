@@ -16,6 +16,7 @@
  */
 /**
  *@author Erik M. Buck
+ *@edited by Ankita Saxena
  */
 package airviewer;
 
@@ -52,8 +53,9 @@ public abstract class AbstractDocumentCommandWrapper {
      * The map from Command names to Command factories. Register Command
      * factories by calling registerCommandFactoryWithName().
      */
-    private static HashMap<String, MakeCommand> nameToFactoryMap
-            = nameToFactoryMap = new HashMap<>();
+    /*private static HashMap<String, MakeCommand> nameToFactoryMap
+            = nameToFactoryMap = new HashMap<>();*/
+    private static HashMap<String, MakeCommand> nameToFactoryMap= new HashMap<>();
 
     /**
      * This is the interface that Command factories stored in nameToFactoryMap

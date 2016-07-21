@@ -34,14 +34,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import org.apache.pdfbox.text.PDFTextStripper;
-import static java.lang.Integer.parseInt;
 import java.nio.charset.Charset;
-import static java.lang.Integer.parseInt;
-import static java.lang.Integer.parseInt;
-import static java.lang.Integer.parseInt;
-import static java.lang.Integer.parseInt;
-import static java.lang.Integer.parseInt;
-import static java.lang.Integer.parseInt;
 import static java.lang.Integer.parseInt;
 
 /**
@@ -53,7 +46,7 @@ public class DocumentCommandWrapper extends AbstractDocumentCommandWrapper {
     /**
      *
      */
-    private String path;
+    //private String path;
 
     /**
      *
@@ -64,7 +57,7 @@ public class DocumentCommandWrapper extends AbstractDocumentCommandWrapper {
         super(aDocument);
 
         assert null != aPath;
-        path = aPath;
+        //path = aPath;
 
         AbstractDocumentCommandWrapper.registerCommandFactoryWithName((AbstractDocumentCommandWrapper owner, ArrayList<String> args) -> new UndoDocumentCommand(owner, args), "Undo");
         AbstractDocumentCommandWrapper.registerCommandFactoryWithName((AbstractDocumentCommandWrapper owner, ArrayList<String> args) -> new RedoDocumentCommand(owner, args), "Redo");
@@ -95,7 +88,8 @@ public class DocumentCommandWrapper extends AbstractDocumentCommandWrapper {
       @   ensures [file at path].annotationContent == \old(<[file at path]>).annotationContent
      */
     public static DocumentCommandWrapper loadDocumentAtPath(String aPath) throws IOException {
-        DocumentCommandWrapper result = null;
+        assert aPath !=null;
+    	DocumentCommandWrapper result = null;
         PDDocument document = PDDocument.load(new File(aPath));
 
         if (null != document) {
@@ -128,6 +122,7 @@ public class DocumentCommandWrapper extends AbstractDocumentCommandWrapper {
         @Override
         public AbstractDocumentCommand execute() {
             assert null != arguments;
+            assert arguments.size() == 5;
 
             AbstractDocumentCommand result = null;
 
@@ -262,8 +257,8 @@ public class DocumentCommandWrapper extends AbstractDocumentCommandWrapper {
     }
 
     /**
-     * Instances of this class encapsulate commands to annotate PDF documents
-     * encapsulated by deleting an existing annotation.
+     * Instances of this class encapsulate commands to annotate PDF documents by
+     * deleting an existing annotation.
      */
     public class DeleteAnnotationDocumentCommand extends AbstractDocumentCommand {
 
@@ -284,6 +279,7 @@ public class DocumentCommandWrapper extends AbstractDocumentCommandWrapper {
         @Override
         public AbstractDocumentCommand execute() {
             assert null != arguments;
+            assert owner != null;
 
             AbstractDocumentCommand result = null;
 
@@ -332,7 +328,8 @@ public class DocumentCommandWrapper extends AbstractDocumentCommandWrapper {
     }
 
     /**
-     *
+     * Instances of this class encapsulate commands to annotate PDF documents by
+     * moving an existing annotation.
      */
     public class MoveAnnotationDocumentCommand extends AbstractDocumentCommand {
 
@@ -431,7 +428,8 @@ public class DocumentCommandWrapper extends AbstractDocumentCommandWrapper {
     }
 
     /**
-     *
+     * Instances of this class encapsulate commands to annotate PDF documents by
+     * replacing an existing annotation.
      */
     public class ReplaceAnnotationDocumentCommand extends AbstractDocumentCommand {
 
@@ -484,7 +482,7 @@ public class DocumentCommandWrapper extends AbstractDocumentCommandWrapper {
     }
 
     /**
-     *
+     * Instances of this class encapsulate commands to save PDF documents.
      */
     public class SaveDocumentCommand extends AbstractDocumentCommand {
 
@@ -505,6 +503,7 @@ public class DocumentCommandWrapper extends AbstractDocumentCommandWrapper {
         @Override
         public AbstractDocumentCommand execute() {
             assert null != arguments;
+            assert owner !=null;
 
             if (1 == arguments.size()) {
                 try {
@@ -530,7 +529,8 @@ public class DocumentCommandWrapper extends AbstractDocumentCommandWrapper {
     }
 
     /**
-     *
+     * Instances of this class encapsulate commands to save the TextObjects in a
+     * PDF documents as plain text.
      */
     public class SaveTextDocumentCommand extends AbstractDocumentCommand {
 
@@ -551,12 +551,14 @@ public class DocumentCommandWrapper extends AbstractDocumentCommandWrapper {
         @Override
         public AbstractDocumentCommand execute() {
             assert null != arguments;
-
+            assert owner!=null;
+            assert owner.wrappedDocument !=null;
+            
             if (1 == arguments.size()) {
                 try {
                     PDFTextStripper stripper = new PDFTextStripper();
                     String parsedText = stripper.getText(owner.wrappedDocument);
-                    Files.write(Paths.get(arguments.get(0)), 
+                    Files.write(Paths.get(arguments.get(0)),
                             parsedText.getBytes(Charset.forName("UTF-8")), StandardOpenOption.CREATE);
                 } catch (IOException ex) {
                     Logger.getLogger(DocumentCommandWrapper.class.getName()).log(Level.SEVERE, null, ex);
