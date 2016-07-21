@@ -5,9 +5,9 @@
  */
 package airviewer;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.charset.Charset;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -17,9 +17,6 @@ import org.apache.pdfbox.cos.COSString;
 import org.apache.pdfbox.pdfparser.PDFStreamParser;
 import org.apache.pdfbox.pdfwriter.ContentStreamWriter;
 import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.pdmodel.PDPageContentStream;
-import org.apache.pdfbox.pdmodel.common.PDRectangle;
-import org.apache.pdfbox.pdmodel.common.PDStream;
 import org.apache.pdfbox.pdmodel.interactive.annotation.PDAnnotation;
 import org.apache.pdfbox.pdmodel.interactive.annotation.PDAppearanceStream;
 
@@ -47,24 +44,24 @@ public class TextInAnnotationReplacer {
                         if (op.getName().equals("Tj")) {
                             // Tj takes one operand and that is the string to display so lets update that operator
                             COSString previous = (COSString) tokens.get(j - 1);
-                            previous.setValue(newContents.getBytes());
+                            previous.setValue(newContents.getBytes(Charset.forName("UTF-8")));
                         } else if (op.getName().equals("TJ")) {
                             COSArray previous = (COSArray) tokens.get(j - 1);
                             for (int k = 0; k < previous.size(); k++) {
                                 Object arrElement = previous.getObject(k);
                                 if (arrElement instanceof COSString) {
                                     COSString cosString = (COSString) arrElement;
-                                    cosString.setValue(newContents.getBytes());
+                                    cosString.setValue(newContents.getBytes(Charset.forName("UTF-8")));
                                 }
                             }
                         }
                     }
                 }
 
-                OutputStream out = annotationAppearanceStream.getStream().createOutputStream(); 
-                ContentStreamWriter tokenWriter = new ContentStreamWriter(out);
-                tokenWriter.writeTokens(tokens);
-                out.close();
+                try (OutputStream out = annotationAppearanceStream.getStream().createOutputStream()) {
+                    ContentStreamWriter tokenWriter = new ContentStreamWriter(out);
+                    tokenWriter.writeTokens(tokens);
+                }
                 
                 anAnnotation.getAppearance().setNormalAppearance(annotationAppearanceStream);
             } catch (IOException ex) {

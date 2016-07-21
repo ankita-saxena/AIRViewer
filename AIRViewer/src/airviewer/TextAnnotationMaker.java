@@ -7,7 +7,6 @@ package airviewer;
 
 import java.awt.geom.AffineTransform;
 import java.io.IOException;
-import static java.lang.Float.max;
 import static java.lang.Float.parseFloat;
 import static java.lang.Integer.parseInt;
 import java.rmi.server.UID;

@@ -86,7 +86,7 @@ public abstract class AbstractDocumentCommandWrapper {
         wrappedDocument = aDocument;
         undoStack = new Stack<>();
         redoStack = new Stack<>();
-        selectedAnnotations = new ArrayList<PDAnnotation>();
+        selectedAnnotations = new ArrayList<>();
     }
 
     protected List<PDAnnotation> getAllSanitizedAnnotationsOnPage(int pageIndex) {
@@ -132,22 +132,20 @@ public abstract class AbstractDocumentCommandWrapper {
     public List<Rectangle> getSelectedAreas() {
         ArrayList<Rectangle> result = new ArrayList<>();
 
-        for (PDAnnotation a : getSelectedAnnotations()) {
-            PDRectangle aBBox = a.getRectangle();
-            Rectangle intBBox = new Rectangle((int) aBBox.getLowerLeftX(),
-                    (int) aBBox.getLowerLeftY(),
-                    (int) aBBox.getWidth(), (int) aBBox.getHeight());
-            result.add(intBBox);
-        }
+        getSelectedAnnotations().stream().map((a) -> a.getRectangle()).map((aBBox) -> new Rectangle((int) aBBox.getLowerLeftX(),
+                (int) aBBox.getLowerLeftY(),
+                (int) aBBox.getWidth(), (int) aBBox.getHeight())).forEach((intBBox) -> {
+                    result.add(intBBox);
+        });
         return result;
     }
 
     public List<String> getSelectedContents() {
         ArrayList<String> result = new ArrayList<>();
 
-        for (PDAnnotation a : getSelectedAnnotations()) {
+        getSelectedAnnotations().stream().forEach((a) -> {
             result.add(a.getContents());
-        }
+        });
         return result;
     }
 
@@ -222,9 +220,7 @@ public abstract class AbstractDocumentCommandWrapper {
     public static String getCommandNames() {
         String result = "";
 
-        for (String name : nameToFactoryMap.keySet()) {
-            result += "\t" + name + "\n";
-        }
+        result = nameToFactoryMap.keySet().stream().map((name) -> "\t" + name + "\n").reduce(result, String::concat);
 
         return result;
     }

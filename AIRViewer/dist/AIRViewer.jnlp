@@ -8,15 +8,12 @@
   </information>
   <resources>
     <j2se version="1.6+" java-vm-args="-enableassertions "  href="http://java.sun.com/products/autodl/j2se"/>
-    <jar href="AIRViewer.jar" size="70344" download="eager" />
+    <jar href="AIRViewer.jar" size="58910" download="eager" />
     <jar href="lib/pdfbox-app-2.0.2.jar" size="7942473" download="eager" />
   </resources>
   <applet-desc  width="800" height="600" main-class="com.javafx.main.NoJavaFXFallback"  name="AIRViewer" >
     <param name="requiredFXVersion" value="8.0+"/>
   </applet-desc>
-  <jfx:javafx-desc  width="800" height="600" main-class="airviewer.AIRViewer"  name="AIRViewer" >
-    <fx:argument>TestInput.pdf</fx:argument>
-    <fx:argument>TestScript.txt</fx:argument>
-  </jfx:javafx-desc>
+  <jfx:javafx-desc  width="800" height="600" main-class="airviewer.AIRViewer"  name="AIRViewer" />
   <update check="always"/>
 </jnlp>

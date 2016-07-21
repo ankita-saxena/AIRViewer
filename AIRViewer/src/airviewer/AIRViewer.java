@@ -6,8 +6,10 @@
 package airviewer;
 
 import java.io.BufferedReader;
-import java.io.FileReader;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.logging.Level;
@@ -24,17 +26,27 @@ import javafx.stage.Stage;
  *
  * @author erik
  */
-public class AIRViewer extends Application {
+public final class AIRViewer extends Application {
 
-    private static Stage primaryStage;
+    private static final String REGEX = "\"([^\"]*)\"|([^\\s#]+)|([#]+.*)";
+    private static final Pattern PATTERN = Pattern.compile(REGEX);
+    private static Stage primaryStage = null;
+
+    private static void setPrimaryStage(Stage aStage) {
+        primaryStage = aStage;
+    }
+
+    public static Stage getPrimaryStage() {
+        return primaryStage;
+    }
 
     @Override
     public void start(Stage stage) throws Exception {
-        primaryStage = stage;
+        setPrimaryStage(stage); // Intentional write to static variable
         Parent root = FXMLLoader.load(getClass().getResource("AIRFXMLDocument.fxml"));
         Scene scene = new Scene(root);
-        primaryStage.setScene(scene);
-        primaryStage.show();
+        getPrimaryStage().setScene(scene);
+        getPrimaryStage().show();
     }
 
     @Override
@@ -61,35 +73,31 @@ public class AIRViewer extends Application {
     private static void runScript(String[] args) throws IOException {
         assert null != args && 2 == args.length;
 
-        String regex = "\"([^\"]*)\"|([^\\s#]+)|([#]+.*)";
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(args[0]), Charset.defaultCharset()))) {
+            DocumentCommandWrapper commandDocument = DocumentCommandWrapper.loadDosumentAtPath(args[1]);
+            String line;
+            while ((line = br.readLine()) != null) {
+                System.out.println(line); // echo the input
 
-        Pattern pattern = Pattern.compile(regex);
-        BufferedReader br = new BufferedReader(new FileReader(args[0]));
+                Matcher m = PATTERN.matcher(line);
+                ArrayList<String> commandAndArgs = new ArrayList<>();
+                while (m.find()) {
+                    if (m.group(1) != null) {
+                        commandAndArgs.add(m.group(1));
+                    } else if (m.group(3) != null) {
+                        // This is a comment: ignore it
+                    } else {
+                        commandAndArgs.add(m.group(2));
+                    }
+                }
 
-        DocumentCommandWrapper commandDocument = DocumentCommandWrapper.loadDosumentAtPath(args[1]);
-        String line;
-        while ((line = br.readLine()) != null) {
-            System.out.println(line); // echo the input
-
-            Matcher m = pattern.matcher(line);
-            ArrayList<String> commandAndArgs = new ArrayList<>();
-            while (m.find()) {
-                if (m.group(1) != null) {
-                    commandAndArgs.add(m.group(1));
-                } else if(m.group(3) != null) {
-                    // This is a comment: ignore it
-                } else {
-                    commandAndArgs.add(m.group(2));
+                if (0 < commandAndArgs.size()) {
+                    String[] commandAndArgsArray = commandAndArgs.toArray(new String[commandAndArgs.size()]);
+                    commandDocument.executeDocumentCommandWithNameAndArgs(commandAndArgsArray[0],
+                            Arrays.copyOfRange(commandAndArgsArray, 1, commandAndArgsArray.length));
                 }
             }
-
-            if (0 < commandAndArgs.size()) {
-                String[] commandAndArgsArray = commandAndArgs.toArray(new String[commandAndArgs.size()]);
-                commandDocument.executeDocumentCommandWithNameAndArgs(commandAndArgsArray[0],
-                        Arrays.copyOfRange(commandAndArgsArray, 1, commandAndArgsArray.length));
-            }
         }
-
     }
 
     /**
@@ -110,7 +118,6 @@ public class AIRViewer extends Application {
      * commands in pathToScript will be applied.
      *
      * @param args ARguments provided on the command line.
-     * @throws IOException
      */
     public static void commandLineMain(String[] args) {
         if (1 == args.length && ("-h".equals(args[0]) || "--help".equals(args[0]))) {
@@ -121,7 +128,7 @@ public class AIRViewer extends Application {
             try {
                 runScript(args);
             } catch (IOException ex) {
-                System.err.println("Unable to run script: <"+args[0]+">");
+                System.err.println("Unable to run script: <" + args[0] + ">");
                 Logger.getLogger(AIRViewer.class.getName()).log(Level.SEVERE, null, ex);
             }
         } else {
@@ -141,10 +148,10 @@ public class AIRViewer extends Application {
                     "<Usage: -t pathToPDF_File>");
             System.err.println(
                     "\tAnnotate pathToPDF_File with bult-in test cases and save to a similar file path with a '~' appended.");
-            System.exit(-1);
+            System.exit(-1); // Intended exit with error return
         }
 
-        System.exit(0);
+        System.exit(0); // Intended exit with error return
     }
 
     /**
@@ -156,9 +163,5 @@ public class AIRViewer extends Application {
         } else {
             launch(args);
         }
-    }
-
-    public static Stage getPrimaryStage() {
-        return primaryStage;
     }
 }

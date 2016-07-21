@@ -10,13 +10,11 @@ import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
-import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.image.Image;
 import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.pdmodel.interactive.annotation.PDAppearanceStream;
 import org.apache.pdfbox.rendering.PDFRenderer;
 
 /**
@@ -25,9 +23,9 @@ import org.apache.pdfbox.rendering.PDFRenderer;
  */
 public class AIRViewerModel extends DocumentCommandWrapper {
 
-    private static final Logger logger = Logger.getLogger(AIRViewerModel.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(AIRViewerModel.class.getName());
 
-    private PDFRenderer renderer;
+    private final PDFRenderer renderer;
 
     AIRViewerModel(Path path) throws IOException {
         super(PDDocument.load(path.toFile()), "");

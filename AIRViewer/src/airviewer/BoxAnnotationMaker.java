@@ -51,7 +51,7 @@ public class BoxAnnotationMaker {
             String contents = "";
             PDFont font = PDType1Font.HELVETICA_OBLIQUE;
             float fontSize = 16; // Or whatever font size you want.
-            float textWidth = font.getStringWidth(contents) * fontSize / 1000.0f;
+            //float textWidth = font.getStringWidth(contents) * fontSize / 1000.0f;
             float textHeight = 32;
 
             try {
@@ -119,10 +119,7 @@ public class BoxAnnotationMaker {
         } catch (NumberFormatException | NullPointerException ex) {
             System.err.println("\tNon number encountered where floating point number expected.");
             result = null;
-        } catch (IOException ex) {
-            Logger.getLogger(BoxAnnotationMaker.class.getName()).log(Level.SEVERE, null, ex);
-            result = null;
-       }
+        }
 
         return result;
     }

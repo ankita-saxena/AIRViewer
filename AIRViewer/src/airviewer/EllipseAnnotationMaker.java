@@ -7,6 +7,7 @@ package airviewer;
 
 import java.awt.geom.AffineTransform;
 import java.io.IOException;
+import static java.lang.Float.max;
 import static java.lang.Float.parseFloat;
 import static java.lang.Integer.parseInt;
 import java.rmi.server.UID;
@@ -53,7 +54,7 @@ public class EllipseAnnotationMaker {
             PDFont font = PDType1Font.HELVETICA_OBLIQUE;
             final float fontSize = 16.0f; // Or whatever font size you want.
             final float lineSpacing = 4.0f;
-            float textWidth = font.getStringWidth(contents) * fontSize / 1000.0f;
+            width = max(width, font.getStringWidth(contents) * fontSize / 1000.0f);
             final float textHeight = fontSize + lineSpacing;
 
             try {

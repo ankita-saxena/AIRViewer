@@ -17,7 +17,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.Group;
@@ -32,6 +31,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import javafx.stage.Window;
 import javafx.stage.WindowEvent;
 
 /**
@@ -102,8 +102,12 @@ public class AIRViewerController implements Initializable {
             FileChooser fileChooser = new FileChooser();
             fileChooser.setTitle("Open PDF File");
             fileChooser.setInitialFileName(startPath);
-            Stage stage = (Stage) pagination.getScene().getWindow();
-            File file = fileChooser.showOpenDialog(stage);
+            
+            @SuppressWarnings("unchecked")
+            Window window = pagination.getScene().getWindow();
+            assert null != window;
+            
+            File file = fileChooser.showOpenDialog(window);
             if (null != file) {
                 String path = file.getCanonicalPath();
                 loadedModel = new AIRViewerModel(Paths.get(path));
@@ -133,7 +137,7 @@ public class AIRViewerController implements Initializable {
             });
 
             // Add knobs to thegroup to indicate selection
-            for (Rectangle r : selectedAreas) {
+            selectedAreas.stream().map((r) -> {
                 Circle knobA = new Circle(r.getX(), (int) pageImageGroup.prefHeight(0) - r.getY(), 4);
                 knobA.setStroke(Color.YELLOW);
                 knobA.setStrokeWidth(2);
@@ -147,10 +151,16 @@ public class AIRViewerController implements Initializable {
                 knobC.setStrokeWidth(2);
                 pageImageGroup.getChildren().add(knobC);
                 Circle knobD = new Circle(r.getX(), (int) pageImageGroup.prefHeight(0) - (r.getY() + r.getHeight()), 4);
+                return knobD;
+            }).map((knobD) -> {
                 knobD.setStroke(Color.YELLOW);
+                return knobD;
+            }).map((knobD) -> {
                 knobD.setStrokeWidth(2);
+                return knobD;
+            }).forEach((knobD) -> {
                 pageImageGroup.getChildren().add(knobD);
-            }
+            });
             if (1 == model.getSelectionSize()) {
                 Rectangle r = model.getSelectedAreas().get(0);
                 TextField textEntry = new TextField(model.getSelectedContents().get(0));
@@ -158,17 +168,13 @@ public class AIRViewerController implements Initializable {
                 textEntry.setLayoutX(r.getX() - textEntry.getLayoutBounds().getMinY());
                 textEntry.setLayoutY((pageImageGroup.prefHeight(0) - r.getY()) - textEntry.getLayoutBounds().getMinY());
 
-                textEntry.setOnAction(new EventHandler<ActionEvent>() {
-                    public void handle(ActionEvent event) {
-
-                        System.out.println(textEntry.getText());
-                        if (null != pagination) {
-                            model.executeDocumentCommandWithNameAndArgs("ChangeSelectedAnnotationText",
-                                    new String[]{Integer.toString(pagination.getCurrentPageIndex()), textEntry.getText()});
-                            refreshUserInterface();
-                        }
+                textEntry.setOnAction((ActionEvent event) -> {
+                    System.out.println(textEntry.getText());
+                    if (null != pagination) {
+                        model.executeDocumentCommandWithNameAndArgs("ChangeSelectedAnnotationText",
+                                new String[]{Integer.toString(pagination.getCurrentPageIndex()), textEntry.getText()});
+                        refreshUserInterface();
                     }
-
                 });
 
                 pageImageGroup.getChildren().add(textEntry);
@@ -398,41 +404,29 @@ public class AIRViewerController implements Initializable {
                 model.redo();
                 refreshUserInterface();
             });
-            addBoxAnnotationMenuItem.setOnAction(new EventHandler<ActionEvent>() {
-                @Override
-                public void handle(ActionEvent e) {
-                    int pageIndex = pagination.getCurrentPageIndex();
-                    model.executeDocumentCommandWithNameAndArgs("AddBoxAnnotation",
-                            new String[]{Integer.toString(pageIndex), "36.0", "36.0", "72.0", "72.0"});
-                    refreshUserInterface();
-                }
+            addBoxAnnotationMenuItem.setOnAction((ActionEvent e) -> {
+                int pageIndex = pagination.getCurrentPageIndex();
+                model.executeDocumentCommandWithNameAndArgs("AddBoxAnnotation",
+                        new String[]{Integer.toString(pageIndex), "36.0", "36.0", "72.0", "72.0"});
+                refreshUserInterface();
             });
-            addEllipseAnnotationMenuItem.setOnAction(new EventHandler<ActionEvent>() {
-                @Override
-                public void handle(ActionEvent e) {
-                    int pageIndex = pagination.getCurrentPageIndex();
-                    model.executeDocumentCommandWithNameAndArgs("AddCircleAnnotation",
-                            new String[]{Integer.toString(pageIndex), "288", "576", "144.0", "72.0", "Sample Text!"});
-                    refreshUserInterface();
-                }
+            addEllipseAnnotationMenuItem.setOnAction((ActionEvent e) -> {
+                int pageIndex = pagination.getCurrentPageIndex();
+                model.executeDocumentCommandWithNameAndArgs("AddCircleAnnotation",
+                        new String[]{Integer.toString(pageIndex), "288", "576", "144.0", "72.0", "Sample Text!"});
+                refreshUserInterface();
             });
-            addTextAnnotationMenuItem.setOnAction(new EventHandler<ActionEvent>() {
-                @Override
-                public void handle(ActionEvent e) {
-                    int pageIndex = pagination.getCurrentPageIndex();
-                    model.executeDocumentCommandWithNameAndArgs("AddTextAnnotation",
-                            new String[]{Integer.toString(pageIndex), "36", "576", "144.0", "19.0", "A Bit More Sample Text!"});
-                    refreshUserInterface();
-                }
+            addTextAnnotationMenuItem.setOnAction((ActionEvent e) -> {
+                int pageIndex = pagination.getCurrentPageIndex();
+                model.executeDocumentCommandWithNameAndArgs("AddTextAnnotation",
+                        new String[]{Integer.toString(pageIndex), "36", "576", "144.0", "19.0", "A Bit More Sample Text!"});
+                refreshUserInterface();
             });
-            deleteAnnotationMenuItem.setOnAction(new EventHandler<ActionEvent>() {
-                @Override
-                public void handle(ActionEvent e) {
-                    int pageIndex = pagination.getCurrentPageIndex();
-                    model.executeDocumentCommandWithNameAndArgs("DeleteSelectedAnnotation",
-                            new String[]{Integer.toString(pageIndex)});
-                    refreshUserInterface();
-                }
+            deleteAnnotationMenuItem.setOnAction((ActionEvent e) -> {
+                int pageIndex = pagination.getCurrentPageIndex();
+                model.executeDocumentCommandWithNameAndArgs("DeleteSelectedAnnotation",
+                        new String[]{Integer.toString(pageIndex)});
+                refreshUserInterface();
             });
         }
 
